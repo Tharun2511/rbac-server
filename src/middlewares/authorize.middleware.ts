@@ -11,3 +11,5 @@ const authorizeMiddleware = (req: Request, res: Response, next: NextFunction) =>
   }
   next();
 };
+
+export default authorizeMiddleware;
