@@ -1,13 +1,18 @@
 import { db } from '../../config/db';
 
-export const createUser = async (data: { name: string; email: string; role: string }) => {
+export const createUser = async (data: {
+    name: string;
+    email: string;
+    role: string;
+    hashPassword: string;
+}) => {
     const result = await db.query(
         `
-        INSERT INTO users (name, email, role, is_active)
-        VALUES ($1, $2, $3, false)
+        INSERT INTO users (name, email, role, is_active, password_hash)
+        VALUES ($1, $2, $3, false, $4)
         RETURNING id, name, email, role, is_active
         `,
-        [data.name, data.email, data.role],
+        [data.name, data.email, data.role, data.hashPassword],
     );
 
     return result.rows[0];
@@ -46,6 +51,19 @@ export const changeUserRole = async (userId: string, role: string) => {
         RETURNING id, name, email, role, is_active
         `,
         [role, userId],
+    );
+
+    return result.rows[0];
+};
+
+export const findUserById = async (userId: string) => {
+    const result = await db.query(
+        `
+        SELECT *
+        FROM users
+        WHERE id = $1
+        `,
+        [userId],
     );
 
     return result.rows[0];
