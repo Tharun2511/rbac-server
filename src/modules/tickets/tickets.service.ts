@@ -39,12 +39,13 @@ export const resolveTicket = async (ticketId: string, resolverId: string) => {
     return updated;
 };
 
-export const verifyResolveStatus = async (ticketId: string, userId: string) => {
+export const verifyResolveStatus = async (ticketId: string, verifierId: string) => {
     const ticketDetails = await findTicketById(ticketId);
 
     if (!ticketDetails || ticketDetails.length === 0) throw new Error('Ticket not found');
 
-    if (ticketDetails.created_by !== userId) throw new Error('Ticket is not created by this user');
+    if (ticketDetails.created_by !== verifierId)
+        throw new Error('Ticket is not created by this user');
 
     if (ticketDetails.status !== 'RESOLVED') throw new Error('Ticket is not resolved yet');
 
@@ -55,7 +56,12 @@ export const verifyResolveStatus = async (ticketId: string, userId: string) => {
     return updated;
 };
 
-export async function closeTicket(ticketId: string) {
+export async function closeTicket(ticketId: string, managerId: string) {
+    const userDetails = await userService.getUserDetails(managerId);
+
+    if (!userDetails || userDetails.role !== 'MANAGER')
+        throw new Error('You do not have permissins');
+
     const updated = await ticketRepo.changeTicketStatus(ticketId, 'CLOSED');
 
     if (!updated) throw new Error('Invalid ticket state');

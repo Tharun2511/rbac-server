@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import authRoutes from './modules/auth/auth.routes';
 import userRoutes from './modules/users/user.routes';
+import ticketRoutes from './modules/tickets/tickets.routes';
 
 const router = Router();
 
@@ -10,5 +11,6 @@ router.use('/main', (_req: Request, res: Response) => {
 
 router.use('/auth', authRoutes);
 router.use('/user', userRoutes);
+router.use('/ticket', ticketRoutes);
 
 export default router;

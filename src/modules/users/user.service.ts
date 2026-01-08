@@ -31,3 +31,7 @@ export const setUserActiveStatus = async (userId: string, isAcitve: boolean) => 
 
     return await userRepo.changeUserStatus(userId, isAcitve);
 };
+
+export const getUserDetails = async (userId: string) => {
+    return await userRepo.findUserById(userId);
+};
