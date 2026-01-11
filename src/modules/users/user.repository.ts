@@ -20,12 +20,12 @@ export const createUser = async (data: {
 
 export const findAllUsers = async () => {
     const result = await db.query(`
-        SELECT id, name, email, role, is_active
+        SELECT id, email, role, is_active
         FROM users
-        ORDER BY name 
+        ORDER BY email 
     `);
 
-    return result.rows[0];
+    return result.rows;
 };
 
 export const changeUserStatus = async (userId: string, isActive: boolean) => {

@@ -10,7 +10,7 @@ router.use('/main', (_req: Request, res: Response) => {
 });
 
 router.use('/auth', authRoutes);
-router.use('/user', userRoutes);
+router.use('/users', userRoutes);
 router.use('/ticket', ticketRoutes);
 
 export default router;

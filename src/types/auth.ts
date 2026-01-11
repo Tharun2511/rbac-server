@@ -1,4 +1,6 @@
+import { Roles } from '../constant/allowedRoles';
+
 export interface AuthUser {
-  userId: string;
-  role: 'USER' | 'MANAGER' | 'RESOLVER' | 'ADMIN';
+    userId: string;
+    role: Roles;
 }

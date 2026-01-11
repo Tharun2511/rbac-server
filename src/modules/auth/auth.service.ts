@@ -7,7 +7,7 @@ export const login = async (email: string, password: string) => {
 
     if (!userDetails || !userDetails.is_active) throw new Error('Invalid Credentials');
 
-    const passwordMatch = await passwordCompare(password, userDetails.hashed_password);
+    const passwordMatch = await passwordCompare(password, userDetails.password_hash);
 
     if (!passwordMatch) throw new Error('Invalid Credentials');
 

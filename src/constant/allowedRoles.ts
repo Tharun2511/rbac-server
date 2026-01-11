@@ -1,3 +1,3 @@
-const allowedRoles = ['USER', 'MANAGER', 'RESOLVER', 'ADMIN'];
+export const allowedRoles = ['USER', 'MANAGER', 'RESOLVER', 'ADMIN'];
 
-export { allowedRoles };
+export type Roles = typeof allowedRoles;
