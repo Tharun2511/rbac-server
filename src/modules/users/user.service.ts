@@ -16,7 +16,7 @@ export const createUser = async (name: string, email: string, role: string, pass
         name,
         email,
         role,
-        hashPassword: passwordHash,
+        passwordHash,
     });
 
     return createdUser;
@@ -34,4 +34,12 @@ export const setUserActiveStatus = async (userId: string, isAcitve: boolean) => 
 
 export const getUserDetails = async (userId: string) => {
     return await userRepo.findUserById(userId);
+};
+
+export const updateUserRole = async (userId: string, role: string) => {
+    if (!allowedRoles.includes(role)) throw new Error('Role must be a valid one');
+
+    if (!userRepo.findUserById(userId)) throw new Error('User does not exist');
+
+    return await userRepo.changeUserRole(userId, role);
 };

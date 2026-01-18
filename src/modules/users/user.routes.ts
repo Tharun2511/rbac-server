@@ -11,5 +11,6 @@ router.use(authorizeMiddleware(['ADMIN']));
 router.get('/', userController.fetchAllUsers);
 router.post('/', userController.createUser);
 router.patch('/status/:userId', userController.updateUserStatus);
+router.patch('/role/:userId', userController.updateUserRole);
 
 export default router;

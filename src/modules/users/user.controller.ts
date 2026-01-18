@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as userService from './user.service';
+import { allowedRoles } from '../../constant/allowedRoles';
 
 export const createUser = async (req: Request, res: Response) => {
     const { name, email, role, password } = req.body;
@@ -28,13 +29,29 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { status } = req.body;
 
-    if (!userId || !status) return res.status(400).json({ message: 'Invalid user or staus' });
+    if (!userId || !status) return res.status(400).json({ message: 'Invalid user or status' });
 
     if (typeof status !== 'boolean')
         return res.status(400).json({ message: 'Invalid isActive value' });
 
     try {
         const user = await userService.setUserActiveStatus(userId, status);
+        return res.status(200).json(user);
+    } catch (error: any) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateUserRole = async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    if (!userId || !role) return res.status(400).json({ message: 'Invalid user or role' });
+
+    if (!allowedRoles.includes(role)) return res.status(400).json({ message: 'Invalid role' });
+
+    try {
+        const user = await userService.updateUserRole(userId, role);
         return res.status(200).json(user);
     } catch (error: any) {
         return res.status(500).json({ message: error.message });

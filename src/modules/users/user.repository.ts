@@ -4,15 +4,15 @@ export const createUser = async (data: {
     name: string;
     email: string;
     role: string;
-    hashPassword: string;
+    passwordHash: string;
 }) => {
     const result = await db.query(
         `
-        INSERT INTO users (name, email, role, is_active, password_hash)
+        INSERT INTO users (name, email, role, "isActive", "passwordHash")
         VALUES ($1, $2, $3, false, $4)
-        RETURNING id, name, email, role, is_active
+        RETURNING id, name, email, role, "isActive"
         `,
-        [data.name, data.email, data.role, data.hashPassword],
+        [data.name, data.email, data.role, data.passwordHash],
     );
 
     return result.rows[0];
@@ -20,7 +20,7 @@ export const createUser = async (data: {
 
 export const findAllUsers = async () => {
     const result = await db.query(`
-        SELECT id, email, role, is_active
+        SELECT id, name, email, role, "isActive"
         FROM users
         ORDER BY email 
     `);
@@ -32,11 +32,11 @@ export const changeUserStatus = async (userId: string, isActive: boolean) => {
     const result = await db.query(
         `
         UPDATE users
-        SET is_active = $1
+        SET "isActive" = $1
         WHERE id = $2
-        RETURNING id, name, email, role, is_active
+        RETURNING id, name, email, role, "isActive"
     `,
-        [userId, isActive],
+        [isActive, userId],
     );
 
     return result.rows[0];
@@ -48,7 +48,7 @@ export const changeUserRole = async (userId: string, role: string) => {
         UPDATE users
         SET role = $1
         WHERE id = $2
-        RETURNING id, name, email, role, is_active
+        RETURNING id, name, email, role, "isActive"
         `,
         [role, userId],
     );

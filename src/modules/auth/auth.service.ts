@@ -5,9 +5,9 @@ import { findUserByEmail } from './auth.repository';
 export const login = async (email: string, password: string) => {
     const userDetails = await findUserByEmail(email);
 
-    if (!userDetails || !userDetails.is_active) throw new Error('Invalid Credentials');
+    if (!userDetails || !userDetails.isActive) throw new Error('Invalid Credentials');
 
-    const passwordMatch = await passwordCompare(password, userDetails.password_hash);
+    const passwordMatch = await passwordCompare(password, userDetails.passwordHash);
 
     if (!passwordMatch) throw new Error('Invalid Credentials');
 

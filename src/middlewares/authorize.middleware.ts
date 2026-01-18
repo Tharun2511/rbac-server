@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { allowedRoles } from '../constant/allowedRoles';
 
 const authorize = (allowedRoles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
