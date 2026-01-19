@@ -1,4 +1,5 @@
 import { db } from '../../config/db';
+import { User } from '../../types/users';
 
 export const createUser = async (data: {
     name: string;
@@ -64,6 +65,18 @@ export const findUserById = async (userId: string) => {
         WHERE id = $1
         `,
         [userId],
+    );
+
+    return result.rows[0];
+};
+
+export const findUserByEmail = async (email: string): Promise<User> => {
+    const result = await db.query(
+        `
+        SELECT id, name, email, "passwordHash", role, "isActive" 
+        FROM users 
+        WHERE email = $1`,
+        [email],
     );
 
     return result.rows[0];

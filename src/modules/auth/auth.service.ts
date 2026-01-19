@@ -1,6 +1,6 @@
 import { signToken } from '../../utils/jwt';
 import { passwordCompare } from '../../utils/password';
-import { findUserByEmail } from './auth.repository';
+import { findUserByEmail } from '../users/user.repository';
 
 export const login = async (email: string, password: string) => {
     const userDetails = await findUserByEmail(email);
