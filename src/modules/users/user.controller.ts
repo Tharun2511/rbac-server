@@ -38,7 +38,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { status } = req.body;
 
-    if (!userId || !status) return res.status(400).json({ message: 'Invalid user or status' });
+    if (!userId) return res.status(400).json({ message: 'Invalid user or status' });
 
     if (typeof status !== 'boolean')
         return res.status(400).json({ message: 'Invalid isActive value' });

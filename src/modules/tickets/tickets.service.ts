@@ -56,7 +56,7 @@ export const verifyResolveStatus = async (ticketId: string, verifierId: string) 
 
     if (!ticketDetails || ticketDetails.length === 0) throw new Error('Ticket not found');
 
-    if (ticketDetails.created_by !== verifierId)
+    if (ticketDetails.createdBy !== verifierId)
         throw new Error('Ticket is not created by this user');
 
     if (ticketDetails.status !== 'RESOLVED') throw new Error('Ticket is not resolved yet');
