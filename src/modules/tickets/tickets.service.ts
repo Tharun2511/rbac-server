@@ -40,7 +40,7 @@ export const resolveTicket = async (ticketId: string, resolverId: string) => {
 
     if (!ticketDetails || ticketDetails.length === 0) throw new Error('Ticket not found');
 
-    if (ticketDetails.assigned_to !== resolverId) throw new Error('Not assigned to this resolver');
+    if (ticketDetails.resolverId !== resolverId) throw new Error('Not assigned to this resolver');
 
     if (ticketDetails.status !== 'ASSIGNED') throw new Error('Ticket is not assigned yet');
 
@@ -79,4 +79,8 @@ export async function closeTicket(ticketId: string, managerId: string) {
     if (!updated) throw new Error('Invalid ticket state');
 
     return updated;
+}
+
+export async function getAssignedTickets(resolverId: string) {
+    return ticketRepo.getAssignedTickets(resolverId);
 }

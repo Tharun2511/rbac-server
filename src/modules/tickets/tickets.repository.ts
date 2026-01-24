@@ -17,15 +17,17 @@ export const createTicket = async (data: {
     return result.rows[0];
 };
 
-export const assignTicket = async (ticketId: string, userId: string) => {
+export const assignTicket = async (ticketId: string, resolverId: string) => {
     const result = await db.query(
         `
-        UPDATE tickets  
-        SET resolverId = $1
+        UPDATE tickets
+        SET "resolverId" = $1,
+        status = 'ASSIGNED'
         WHERE id = $2
-        RETURNING *
+        RETURNING *;
+
         `,
-        [userId, ticketId],
+        [resolverId, ticketId],
     );
 
     return result.rows[0];
@@ -61,9 +63,36 @@ export const findTicketsAssignedToUser = async (userId: string) => {
 export const findTicketById = async (ticketId: string) => {
     const result = await db.query(
         `
-        SELECT * 
-        FROM tickets
-        WHERE id = $1
+       SELECT
+        t.*,
+
+        -- Resolver details
+        json_build_object(
+            'id', r.id,
+            'name', r.name,
+            'email', r.email,
+            'role', r.role
+        ) AS resolver,
+
+        -- Creator details
+        json_build_object(
+            'id', u.id,
+            'name', u.name,
+            'email', u.email,
+            'role', u.role
+        ) AS "createdUser"
+
+        FROM tickets t
+
+         -- Join resolver
+    LEFT JOIN users r
+        ON t."resolverId" = r.id
+
+    -- Join creator
+    JOIN users u
+        ON t."createdBy" = u.id
+
+        WHERE t.id = $1
         `,
         [ticketId],
     );
@@ -74,12 +103,38 @@ export const findTicketById = async (ticketId: string) => {
 export const findAllTickets = async () => {
     const result = await db.query(
         `
-        SELECT *
-        FROM tickets
-        `,
+        SELECT
+        t.*,
+
+        -- Resolver details
+        json_build_object(
+            'id', r.id,
+            'name', r.name,
+            'email', r.email,
+            'role', r.role
+        ) AS resolver,
+
+        -- Creator details
+        json_build_object(
+            'id', u.id,
+            'name', u.name,
+            'email', u.email,
+            'role', u.role
+        ) AS "createdUser"
+
+        FROM tickets t
+
+         -- Join resolver
+    LEFT JOIN users r
+        ON t."resolverId" = r.id
+
+    -- Join creator
+    JOIN users u
+        ON t."createdBy" = u.id
+       `,
     );
 
-    return result.rows[0];
+    return result.rows;
 };
 
 export const getMyTickets = async (userId: string) => {
@@ -160,6 +215,39 @@ export const getHistoryTickets = async (userId: string) => {
 
           ORDER BY t."createdAt" DESC
         `,
+        [userId],
     );
+    return result.rows;
+};
+
+export const getAssignedTickets = async (resolverId: string) => {
+    const result = await db.query(
+        `
+    SELECT
+      t.*,
+
+      json_build_object(
+          'id', r.id,
+          'name', r.name,
+          'email', r.email,
+          'role', r.role
+      ) AS resolver,
+
+      json_build_object(
+          'id', u.id,
+          'name', u.name,
+          'email', u.email,
+          'role', u.role
+      ) AS "createdUser"
+       
+    FROM tickets t
+    JOIN users r ON t."resolverId" = r.id
+    JOIN users u ON t."createdBy" = u.id
+    WHERE t."resolverId" = $1
+    ORDER BY t."createdAt" DESC
+    `,
+        [resolverId],
+    );
+
     return result.rows;
 };

@@ -33,11 +33,11 @@ export const findAllResolvers = async () => {
     const result = await db.query(`
         SELECT id, name, role, "isActive"
         FROM users
-        WHERE role="RESOLVER"
+        WHERE role='RESOLVER'
         ORDER BY name
     `);
 
-    return result.rows[0];
+    return result.rows;
 };
 
 export const changeUserStatus = async (userId: string, isActive: boolean) => {

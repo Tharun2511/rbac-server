@@ -13,7 +13,8 @@ router.patch('/assign/:ticketId', authorize(['MANAGER']), ticketController.assig
 router.patch('/resolve/:ticketId', authorize(['RESOLVER']), ticketController.resolveTicket);
 router.post('/verify/:ticketId', authorize(['USER']), ticketController.verifyTicketResolved);
 router.post('/close/:ticketId', authorize(['MANAGER']), ticketController.closeTicket);
-router.get('/:id', ticketController.findTicketById);
+router.get('/:ticketId', ticketController.findTicketById);
 router.get('/my/history', ticketController.getMyTickets);
+router.get('/assigned/:resolverId', authorize(['RESOLVER']), ticketController.getAssignedTickets);
 
 export default router;

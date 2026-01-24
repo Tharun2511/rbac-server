@@ -89,7 +89,9 @@ export const findTicketById = async (req: Request, res: Response) => {
 
     if (!ticketId) return res.status(400).json({ message: 'TicketId is not valid' });
 
-    return await ticketService.findTicketById(ticketId);
+    const tickets = await ticketService.findTicketById(ticketId);
+
+    return res.status(200).json(tickets);
 };
 
 export const getMyTickets = async (req: Request, res: Response) => {
@@ -99,5 +101,10 @@ export const getMyTickets = async (req: Request, res: Response) => {
 
 export const getHistoryTickets = async (req: Request, res: Response) => {
     const tickets = await ticketService.getHistoryTickets(req.user?.userId || '');
+    return res.status(200).json(tickets);
+};
+
+export const getAssignedTickets = async (req: Request, res: Response) => {
+    const tickets = await ticketService.getAssignedTickets(req.params.resolverId);
     return res.status(200).json(tickets);
 };
