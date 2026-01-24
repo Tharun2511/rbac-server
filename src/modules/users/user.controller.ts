@@ -25,6 +25,15 @@ export const fetchAllUsers = async (_req: Request, res: Response) => {
     }
 };
 
+export const fetchAllResolvers = async (_req: Request, res: Response) => {
+    try {
+        const resolvers = await userService.listAllResolvers();
+        return res.json(200).json(resolvers);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const updateUserStatus = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { status } = req.body;

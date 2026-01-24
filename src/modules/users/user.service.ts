@@ -26,6 +26,10 @@ export const listAllUsers = async () => {
     return await userRepo.findAllUsers();
 };
 
+export const listAllResolvers = async () => {
+    return await userRepo.findAllResolvers();
+};
+
 export const setUserActiveStatus = async (userId: string, isAcitve: boolean) => {
     if (!userRepo.findUserById(userId)) throw new Error('User does not exist');
 

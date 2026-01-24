@@ -1,15 +1,19 @@
 import { Router } from 'express';
 import authorize from '../../middlewares/authorize.middleware';
 import authMiddleware from '../../middlewares/auth.middleware';
-import * as tickerController from './tickets.controller';
+import * as ticketController from './tickets.controller';
 
 const router = Router();
 router.use(authMiddleware);
 
-router.post('/', authorize(['USER']), tickerController.createTicket);
-router.patch('/assign/:ticketId', authorize(['MANAGER']), tickerController.assignTicket);
-router.patch('/resolve/:ticketId', authorize(['RESOLVER']), tickerController.resolveTicket);
-router.post('/verify/:ticketId', authorize(['USER']), tickerController.verifyTicketResolved);
-router.post('/close/:ticketId', authorize(['MANAGER']), tickerController.closeTicket);
+router.get('/me', authorize(['USER']), ticketController.getMyTickets);
+router.get('/', authorize(['ADMIN', 'MANAGER']), ticketController.listAllTickets);
+router.post('/', authorize(['USER']), ticketController.createTicket);
+router.patch('/assign/:ticketId', authorize(['MANAGER']), ticketController.assignTicket);
+router.patch('/resolve/:ticketId', authorize(['RESOLVER']), ticketController.resolveTicket);
+router.post('/verify/:ticketId', authorize(['USER']), ticketController.verifyTicketResolved);
+router.post('/close/:ticketId', authorize(['MANAGER']), ticketController.closeTicket);
+router.get('/:id', ticketController.findTicketById);
+router.get('/my/history', ticketController.getMyTickets);
 
 export default router;

@@ -11,6 +11,6 @@ router.use('/main', (_req: Request, res: Response) => {
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
-router.use('/ticket', ticketRoutes);
+router.use('/tickets', ticketRoutes);
 
 export default router;

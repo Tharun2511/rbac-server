@@ -19,8 +19,20 @@ export const assignTicket = async (ticketId: string, resolverId: string) => {
     return ticket;
 };
 
+export const findAllTickets = async () => {
+    return await ticketRepo.findAllTickets();
+};
+
 export const findTicketById = async (ticketId: string) => {
     return await ticketRepo.findTicketById(ticketId);
+};
+
+export const getMyTickets = async (userId: string) => {
+    return await ticketRepo.getMyTickets(userId);
+};
+
+export const getHistoryTickets = async (userId: string) => {
+    return await ticketRepo.getHistoryTickets(userId);
 };
 
 export const resolveTicket = async (ticketId: string, resolverId: string) => {

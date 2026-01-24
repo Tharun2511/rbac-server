@@ -6,11 +6,15 @@ import * as userController from './user.controller';
 const router = Router();
 
 router.use(authMiddleware);
-router.use(authorizeMiddleware(['ADMIN']));
 
-router.get('/', userController.fetchAllUsers);
-router.post('/', userController.createUser);
-router.patch('/status/:userId', userController.updateUserStatus);
-router.patch('/role/:userId', userController.updateUserRole);
+router.get('/', authorizeMiddleware(['ADMIN']), userController.fetchAllUsers);
+router.get(
+    '/resolvers',
+    authorizeMiddleware(['ADMIN', 'MANAGER']),
+    userController.fetchAllResolvers,
+);
+router.post('/', authorizeMiddleware(['ADMIN']), userController.createUser);
+router.patch('/status/:userId', authorizeMiddleware(['ADMIN']), userController.updateUserStatus);
+router.patch('/role/:userId', authorizeMiddleware(['ADMIN']), userController.updateUserRole);
 
 export default router;

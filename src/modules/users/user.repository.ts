@@ -23,10 +23,21 @@ export const findAllUsers = async () => {
     const result = await db.query(`
         SELECT id, name, email, role, "isActive"
         FROM users
-        ORDER BY email 
+        ORDER BY name 
     `);
 
     return result.rows;
+};
+
+export const findAllResolvers = async () => {
+    const result = await db.query(`
+        SELECT id, name, role, "isActive"
+        FROM users
+        WHERE role="RESOLVER"
+        ORDER BY name
+    `);
+
+    return result.rows[0];
 };
 
 export const changeUserStatus = async (userId: string, isActive: boolean) => {

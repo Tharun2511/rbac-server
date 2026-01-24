@@ -71,6 +71,33 @@ export const closeTicket = async (req: Request, res: Response) => {
         await ticketService.closeTicket(ticketId, managerId!);
         return res.status(200).json({ message: 'Ticket verified successfully' });
     } catch (error: any) {
-        return res.status(500).json({ Message: error.message });
+        return res.status(500).json({ message: error.message });
     }
+};
+
+export const listAllTickets = async (_req: Request, res: Response) => {
+    try {
+        const tickets = await ticketService.findAllTickets();
+        return res.status(200).json(tickets);
+    } catch (error: any) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const findTicketById = async (req: Request, res: Response) => {
+    const { ticketId } = req.params;
+
+    if (!ticketId) return res.status(400).json({ message: 'TicketId is not valid' });
+
+    return await ticketService.findTicketById(ticketId);
+};
+
+export const getMyTickets = async (req: Request, res: Response) => {
+    const myTickets = await ticketService.getMyTickets(req.user?.userId || '');
+    return res.status(200).json(myTickets);
+};
+
+export const getHistoryTickets = async (req: Request, res: Response) => {
+    const tickets = await ticketService.getHistoryTickets(req.user?.userId || '');
+    return res.status(200).json(tickets);
 };
