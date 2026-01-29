@@ -1,6 +1,8 @@
 import { signToken } from '../../utils/jwt';
 import { passwordCompare } from '../../utils/password';
 import { findUserByEmail } from '../users/user.repository';
+import crypto from "crypto";
+import * as authRepository from './auth.repository';
 
 export const login = async (email: string, password: string) => {
     const userDetails = await findUserByEmail(email);
@@ -11,7 +13,7 @@ export const login = async (email: string, password: string) => {
 
     if (!passwordMatch) throw new Error('Invalid Credentials');
 
-    const token = signToken({ userId: userDetails.id, role: userDetails.role });
+    const token = signToken({ userId: userDetails.id, role: userDetails.role, name: userDetails.name });
 
     return {
         user: {
@@ -23,3 +25,16 @@ export const login = async (email: string, password: string) => {
         token,
     };
 };
+
+function hashRefreshToken(refreshToken: string) {
+    return crypto.createHash("sha256").update(refreshToken).digest("hex");
+}
+
+export function generateRefreshToken() {
+  const refreshToken = crypto.randomBytes(40).toString("hex");
+  return hashRefreshToken(refreshToken);
+}
+
+export async function getUserByRefreshToken (refreshToken: string) {
+    return await authRepository.findUserByRefreshToken(hashRefreshToken(refreshToken));
+}
