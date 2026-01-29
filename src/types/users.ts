@@ -6,4 +6,5 @@ export interface User {
     passwordHash: string;
     isActive: boolean;
     role: Roles;
+    name: string;
 }

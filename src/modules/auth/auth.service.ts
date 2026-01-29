@@ -18,6 +18,7 @@ export const login = async (email: string, password: string) => {
             id: userDetails.id,
             email: userDetails.email,
             role: userDetails.role,
+            name: userDetails.name,
         },
         token,
     };

@@ -5,8 +5,8 @@ import ticketRoutes from './modules/tickets/tickets.routes';
 
 const router = Router();
 
-router.use('/main', (_req: Request, res: Response) => {
-    return res.status(200).json({ message: 'Hello World' });
+router.use('/health', (_req: Request, res: Response) => {
+    return res.status(200).json({ message: 'healthy' });
 });
 
 router.use('/auth', authRoutes);
