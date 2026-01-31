@@ -4,14 +4,15 @@ export const createTicket = async (data: {
     title: string;
     description: string;
     createdBy: string;
+    priority?: string;
 }) => {
     const result = await db.query(
         `
-        INSERT INTO tickets (title, description, "createdBy", status)
-        VALUES ($1, $2, $3, 'OPEN')
+        INSERT INTO tickets (title, description, "createdBy", status, priority, type)
+        VALUES ($1, $2, $3, 'OPEN', $4, 'TICKET')
         RETURNING *
         `,
-        [data.title, data.description, data.createdBy],
+        [data.title, data.description, data.createdBy, data.priority || 'LOW'],
     );
 
     return result.rows[0];
@@ -47,17 +48,46 @@ export const changeTicketStatus = async (ticketId: string, ticketStatus: string)
     return result.rows[0];
 };
 
+export const updateTicketPriority = async (ticketId: string, priority: string) => {
+    const result = await db.query(
+        `
+        UPDATE tickets
+        SET priority = $1
+        WHERE id = $2
+        RETURNING *
+        `,
+        [priority, ticketId],
+    );
+
+    return result.rows[0];
+};
+
+export const updateTicketType = async (ticketId: string, type: string) => {
+    const result = await db.query(
+        `
+        UPDATE tickets
+        SET type = $1
+        WHERE id = $2
+        RETURNING *
+        `,
+        [type, ticketId],
+    );
+
+    return result.rows[0];
+};
+
 export const findTicketsAssignedToUser = async (userId: string) => {
     const result = await db.query(
         `
         SELECT * 
         FROM tickets
         WHERE resolverId = $1
+        ORDER BY "createdAt" DESC
         `,
         [userId],
     );
 
-    return result.rows[0];
+    return result.rows;
 };
 
 export const findTicketById = async (ticketId: string) => {
@@ -93,6 +123,7 @@ export const findTicketById = async (ticketId: string) => {
         ON t."createdBy" = u.id
 
         WHERE t.id = $1
+        ORDER BY t."createdAt" DESC
         `,
         [ticketId],
     );
@@ -131,6 +162,8 @@ export const findAllTickets = async () => {
     -- Join creator
     JOIN users u
         ON t."createdBy" = u.id
+
+    ORDER BY t."createdAt" DESC
        `,
     );
 

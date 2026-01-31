@@ -16,5 +16,7 @@ router.patch('/close/:ticketId', authorize(['MANAGER']), ticketController.closeT
 router.get('/:ticketId', ticketController.findTicketById);
 router.get('/my/history', ticketController.getMyTickets);
 router.get('/assigned/:resolverId', authorize(['RESOLVER']), ticketController.getAssignedTickets);
+router.patch('/classification/:ticketId', authorize(['MANAGER']), ticketController.updateTicketClassification);
+router.patch('/status/:ticketId', authorize(['MANAGER']), ticketController.changeTicketStatus);
 
 export default router;

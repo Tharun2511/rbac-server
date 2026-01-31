@@ -10,6 +10,7 @@ export const createTicket = async (req: Request, res: Response) => {
         const createdTicket = await ticketService.createTicket(req.user?.userId!, {
             title,
             description,
+            priority: req.body.priority 
         });
         return res.status(201).json(createdTicket);
     } catch (error: any) {
@@ -107,4 +108,46 @@ export const getHistoryTickets = async (req: Request, res: Response) => {
 export const getAssignedTickets = async (req: Request, res: Response) => {
     const tickets = await ticketService.getAssignedTickets(req.params.resolverId);
     return res.status(200).json(tickets);
+};
+
+export const changeTicketStatus = async (req: Request, res: Response) => {
+    const { ticketId } = req.params;
+    const { status } = req.body;
+
+    if (!ticketId || !status) return res.status(400).json({ message: 'Missing fields' });
+
+    try {
+        const updated = await ticketService.changeStatus(ticketId, status, req.user?.userId!);
+        return res.status(200).json(updated);
+    } catch (error: any) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateTicketClassification = async (req: Request, res: Response) => {
+    const { ticketId } = req.params;
+    const { priority, type } = req.body;
+
+    if (!ticketId) return res.status(400).json({ message: 'Missing fields' });
+
+    try {
+        let updatedTicket;
+
+        if (priority) {
+            updatedTicket = await ticketService.updatePriority(ticketId, priority, req.user?.userId!);
+        }
+
+        if (type) {
+            updatedTicket = await ticketService.updateType(ticketId, type, req.user?.userId!);
+        }
+
+        if (!updatedTicket) {
+             // In case neither priority nor type was provided, just return the ticket
+             updatedTicket = await ticketService.findTicketById(ticketId);
+        }
+
+        return res.status(200).json(updatedTicket);
+    } catch (error: any) {
+        return res.status(500).json({ message: error.message });
+    }
 };

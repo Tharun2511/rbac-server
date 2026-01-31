@@ -3,11 +3,12 @@ import * as userService from '../users/user.service';
 import * as activityService from '../activity/activity.service';
 import { ActivityTypes } from '../activity/activity.types';
 
-export const createTicket = async (userId: string, data: { title: string; description: string }) => {
+export const createTicket = async (userId: string, data: { title: string; description: string; priority?: string }) => {
     const ticket = await ticketRepo.createTicket({
         title: data.title,
         description: data.description,
         createdBy: userId,
+        priority: data.priority
     });
     if (ticket) {
         await activityService.addActivity(ticket.id, userId, ActivityTypes.CREATED, { title: data.title });
@@ -20,6 +21,11 @@ export const assignTicket = async (ticketId: string, resolverId: string, assigne
 
     if (!ticket) {
         throw new Error('Ticket not in OPEN state');
+    }
+
+    // Check if type is still default 'TICKET'
+    if (ticket.type === 'TICKET') {
+        throw new Error('Manager must set ticket type before assigning');
     }
 
     await activityService.addActivity(ticketId, assignedBy, ActivityTypes.ASSIGNED, { resolverId });
@@ -98,3 +104,47 @@ export async function closeTicket(ticketId: string, managerId: string) {
 export async function getAssignedTickets(resolverId: string) {
     return ticketRepo.getAssignedTickets(resolverId);
 }
+
+export const updatePriority = async (ticketId: string, priority: string, userId: string) => {
+    const ticket = await ticketRepo.findTicketById(ticketId);
+    if (!ticket) throw new Error('Ticket not found');
+
+    const updated = await ticketRepo.updateTicketPriority(ticketId, priority);
+    
+    await activityService.addActivity(ticketId, userId, ActivityTypes.PRIORITY_CHANGED, {
+        oldPriority: ticket.priority,
+        newPriority: priority
+    });
+
+    return updated;
+};
+
+
+
+export const updateType = async (ticketId: string, type: string, userId: string) => {
+    const ticket = await ticketRepo.findTicketById(ticketId);
+    if (!ticket) throw new Error('Ticket not found');
+
+    const updated = await ticketRepo.updateTicketType(ticketId, type);
+
+    await activityService.addActivity(ticketId, userId, ActivityTypes.TYPE_CHANGED, {
+        oldType: ticket.type,
+        newType: type
+    });
+
+    return updated;
+};
+
+export const changeStatus = async (ticketId: string, status: string, userId: string) => {
+    const ticket = await ticketRepo.findTicketById(ticketId);
+    if (!ticket) throw new Error('Ticket not found');
+
+    const updated = await ticketRepo.changeTicketStatus(ticketId, status);
+
+    await activityService.addActivity(ticketId, userId, ActivityTypes.STATUS_CHANGED, {
+        oldStatus: ticket.status,
+        newStatus: status
+    });
+
+    return updated;
+};
