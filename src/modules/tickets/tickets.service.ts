@@ -1,20 +1,28 @@
 import * as ticketRepo from './tickets.repository';
 import * as userService from '../users/user.service';
+import * as activityService from '../activity/activity.service';
+import { ActivityTypes } from '../activity/activity.types';
 
-export const createTicket = (userId: string, data: { title: string; description: string }) => {
-    return ticketRepo.createTicket({
+export const createTicket = async (userId: string, data: { title: string; description: string }) => {
+    const ticket = await ticketRepo.createTicket({
         title: data.title,
         description: data.description,
         createdBy: userId,
     });
+    if (ticket) {
+        await activityService.addActivity(ticket.id, userId, ActivityTypes.CREATED, { title: data.title });
+    }
+    return ticket;
 };
 
-export const assignTicket = async (ticketId: string, resolverId: string) => {
+export const assignTicket = async (ticketId: string, resolverId: string, assignedBy: string) => {
     const ticket = await ticketRepo.assignTicket(ticketId, resolverId);
 
     if (!ticket) {
         throw new Error('Ticket not in OPEN state');
     }
+
+    await activityService.addActivity(ticketId, assignedBy, ActivityTypes.ASSIGNED, { resolverId });
 
     return ticket;
 };
@@ -48,6 +56,8 @@ export const resolveTicket = async (ticketId: string, resolverId: string) => {
 
     if (!updated) throw new Error('Invalid ticket state');
 
+    await activityService.addActivity(ticketId, resolverId, ActivityTypes.RESOLVED, {});
+
     return updated;
 };
 
@@ -65,6 +75,8 @@ export const verifyResolveStatus = async (ticketId: string, verifierId: string) 
 
     if (!updated) throw new Error('Invalid ticket state');
 
+    await activityService.addActivity(ticketId, verifierId, ActivityTypes.VERIFIED, {});
+
     return updated;
 };
 
@@ -77,6 +89,8 @@ export async function closeTicket(ticketId: string, managerId: string) {
     const updated = await ticketRepo.changeTicketStatus(ticketId, 'CLOSED');
 
     if (!updated) throw new Error('Invalid ticket state');
+
+    await activityService.addActivity(ticketId, managerId, ActivityTypes.CLOSED, {});
 
     return updated;
 }

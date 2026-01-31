@@ -25,7 +25,7 @@ export const assignTicket = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Missing Required fields' });
 
     try {
-        await ticketService.assignTicket(ticketId, resolverId);
+        await ticketService.assignTicket(ticketId, resolverId, req.user?.userId!);
         return res.status(200).json({ message: 'Assigned ticket successfully' });
     } catch (error: any) {
         return res.status(500).json({ message: error.message });

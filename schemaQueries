@@ -8,3 +8,13 @@ CREATE TABLE ticket_comments (
 
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE ticket_activity (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "ticketId" UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+    "performedBy" UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    type TEXT NOT NULL,
+    metadata JSONB,
+    "createdAt" TIMESTAMPTZ DEFAULT NOW()
+);
+
