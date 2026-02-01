@@ -15,6 +15,9 @@ export const login = async (email: string, password: string) => {
 
     const token = signToken({ userId: userDetails.id, role: userDetails.role, name: userDetails.name });
 
+    const refreshToken = generateRefreshToken();
+    await authRepository.updateRefreshToken(userDetails.id, refreshToken);
+
     return {
         user: {
             id: userDetails.id,
@@ -23,16 +26,16 @@ export const login = async (email: string, password: string) => {
             name: userDetails.name,
         },
         token,
+        refreshToken
     };
 };
 
-function hashRefreshToken(refreshToken: string) {
+export function hashRefreshToken(refreshToken: string) {
     return crypto.createHash("sha256").update(refreshToken).digest("hex");
 }
 
 export function generateRefreshToken() {
-  const refreshToken = crypto.randomBytes(40).toString("hex");
-  return hashRefreshToken(refreshToken);
+    return crypto.randomBytes(40).toString("hex");
 }
 
 export async function getUserByRefreshToken (refreshToken: string) {

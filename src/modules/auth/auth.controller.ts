@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as authService from './auth.service';
 import { updateRefreshToken } from './auth.repository';
-import { generateRefreshToken } from './auth.service';
+import { generateRefreshToken, hashRefreshToken } from './auth.service';
 import { signToken } from '../../utils/jwt';
 
 export const login = async (req: Request, res: Response) => {
@@ -12,8 +12,10 @@ export const login = async (req: Request, res: Response) => {
     
     try {
         const result = await authService.login(email, password);
-        const refreshToken = generateRefreshToken();
-        await updateRefreshToken(result.user.id, refreshToken);
+        
+        // Remove refreshToken from response body but keep it for cookie
+        const { refreshToken, ...responseBody } = result;
+        
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: true,
@@ -22,7 +24,9 @@ export const login = async (req: Request, res: Response) => {
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days    
         });
 
-        return res.status(200).json(result);
+        return res.status(200).json(responseBody);
+
+
     } catch {
         return res.status(401).json({ message: 'Invalid Credentials' });
     }
@@ -51,7 +55,7 @@ export const refreshToken = async(req:Request, res: Response) => {
         const newAccessToken = signToken({ userId: user.id, role: user.role, name: user.name });
 
         const newRefreshToken = generateRefreshToken();
-        await updateRefreshToken(user.id, newRefreshToken);
+        await updateRefreshToken(user.id, hashRefreshToken(newRefreshToken));
 
         // Rotate the refresh token
         res.cookie("refreshToken", newRefreshToken, {

@@ -23,6 +23,7 @@ export const assignTicket = async (ticketId: string, resolverId: string) => {
         `
         UPDATE tickets
         SET "resolverId" = $1,
+        "updatedAt" = NOW(),
         status = 'ASSIGNED'
         WHERE id = $2
         RETURNING *;
@@ -38,7 +39,8 @@ export const changeTicketStatus = async (ticketId: string, ticketStatus: string)
     const result = await db.query(
         `
         UPDATE tickets
-        SET status = $1
+        SET status = $1,
+        "updatedAt" = NOW()
         WHERE id = $2
         RETURNING *
         `,
@@ -52,7 +54,8 @@ export const updateTicketPriority = async (ticketId: string, priority: string) =
     const result = await db.query(
         `
         UPDATE tickets
-        SET priority = $1
+        SET priority = $1,
+        "updatedAt" = NOW()
         WHERE id = $2
         RETURNING *
         `,
@@ -66,7 +69,8 @@ export const updateTicketType = async (ticketId: string, type: string) => {
     const result = await db.query(
         `
         UPDATE tickets
-        SET type = $1
+        SET type = $1,
+        "updatedAt" = NOW()
         WHERE id = $2
         RETURNING *
         `,
@@ -244,7 +248,7 @@ export const getHistoryTickets = async (userId: string) => {
 
           WHERE t."createdBy" = $1
 
-          AND t.status IN ("CLOSED", "VERIFIED_BY_USER", "RESOLVED_BY_RESOLVER")
+          AND t.status IN ("CLOSED", "VERIFIED", "RESOLVED")
 
           ORDER BY t."createdAt" DESC
         `,

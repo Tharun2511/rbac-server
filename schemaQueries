@@ -2,7 +2,7 @@
 CREATE TYPE user_role_enum AS ENUM ('USER', 'ADMIN', 'MANAGER', 'RESOLVER');
 CREATE TYPE ticket_status_enum AS ENUM ('OPEN', 'ASSIGNED', 'RESOLVED', 'VERIFIED', 'CLOSED');
 CREATE TYPE ticket_priority_enum AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
-CREATE TYPE ticket_type_enum AS ENUM ('BUG', 'FEATURE', 'SUPPORT', 'GENERAL');
+CREATE TYPE ticket_type_enum AS ENUM ('TICKET', 'BUG', 'FEATURE', 'SUPPORT', 'GENERAL');
 
 -- Users Table
 CREATE TABLE users (

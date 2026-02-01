@@ -4,6 +4,7 @@ import userRoutes from './modules/users/user.routes';
 import ticketRoutes from './modules/tickets/tickets.routes';
 import commentRoutes from './modules/comments/comments.routes';
 import timelineRoutes from "./modules/timeline/timeline.routes";
+import analyticsRoutes from './modules/analytics/analytics.routes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/users', userRoutes);
 router.use('/tickets', ticketRoutes);
 router.use('/comments', commentRoutes);
 router.use("/timeline", timelineRoutes);
+router.use('/analytics', analyticsRoutes);
 
 export default router;

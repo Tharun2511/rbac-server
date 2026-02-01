@@ -44,7 +44,8 @@ export const changeUserStatus = async (userId: string, isActive: boolean) => {
     const result = await db.query(
         `
         UPDATE users
-        SET "isActive" = $1
+        SET "isActive" = $1,
+        "updatedAt" = NOW()
         WHERE id = $2
         RETURNING id, name, email, role, "isActive"
     `,
@@ -58,7 +59,8 @@ export const changeUserRole = async (userId: string, role: string) => {
     const result = await db.query(
         `
         UPDATE users
-        SET role = $1
+        SET role = $1,
+        "updatedAt" = NOW()
         WHERE id = $2
         RETURNING id, name, email, role, "isActive"
         `,
