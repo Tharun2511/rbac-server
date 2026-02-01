@@ -35,9 +35,9 @@ export function hashRefreshToken(refreshToken: string) {
 }
 
 export function generateRefreshToken() {
-    return crypto.randomBytes(40).toString("hex");
+    return hashRefreshToken(crypto.randomBytes(40).toString("hex"));
 }
 
 export async function getUserByRefreshToken (refreshToken: string) {
-    return await authRepository.findUserByRefreshToken(hashRefreshToken(refreshToken));
+    return await authRepository.findUserByRefreshToken(refreshToken);
 }

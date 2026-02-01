@@ -27,8 +27,8 @@ export const login = async (req: Request, res: Response) => {
         return res.status(200).json(responseBody);
 
 
-    } catch {
-        return res.status(401).json({ message: 'Invalid Credentials' });
+    } catch(err) {
+        return res.status(401).json({ message: 'Invalid Credentials', error: err });
     }
 };
 
