@@ -7,7 +7,7 @@ export const createComment = async (data: {
 }) => {
     const result = await db.query(
         `
-        INSERT INTO ticket_comments ("ticketId", "userId", comment)
+        INSERT INTO ticket_comments (ticket_id, user_id, comment)
         VALUES ($1, $2, $3)
         RETURNING *
         `,
@@ -29,9 +29,9 @@ export const getCommentsByTicketId = async (ticketId: string) => {
                 'role', u.role
             ) AS user
         FROM ticket_comments c
-        JOIN users u ON c."userId" = u.id
-        WHERE c."ticketId" = $1
-        ORDER BY c."createdAt" ASC
+        JOIN users u ON c.user_id = u.id
+        WHERE c.ticket_id = $1
+        ORDER BY c.created_at ASC
         `,
         [ticketId],
     );

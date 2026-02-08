@@ -3,9 +3,12 @@ import * as authService from './auth.service';
 import { updateRefreshToken } from './auth.repository';
 import { generateRefreshToken, hashRefreshToken } from './auth.service';
 import { signToken } from '../../utils/jwt';
+import logger from '../../utils/logger';
 
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
+
+    logger.info(`Login attempt for user: ${email} and password: ${password}`);
     
     if (!email || !password)
         return res.status(400).json({ message: 'Email and Password are required' });

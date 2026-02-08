@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+
+
 function requireEnv(name: string, value?: string): string {
   if (!value) {
     throw new Error(`❌ Missing required environment variable: ${name}`);

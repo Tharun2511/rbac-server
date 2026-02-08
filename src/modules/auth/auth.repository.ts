@@ -4,7 +4,7 @@ export async function updateRefreshToken(userId: string, refreshToken: string | 
   await db.query(
     `
       UPDATE users
-      SET "refreshToken" = $1
+      SET refresh_token = $1
       WHERE id = $2
     `,
     [refreshToken, userId]
@@ -16,7 +16,7 @@ export async function findUserByRefreshToken(refreshToken: string) {
     `
       SELECT *
       FROM users
-      WHERE "refreshToken" = $1
+      WHERE refresh_token = $1
     `,
     [refreshToken]
   );

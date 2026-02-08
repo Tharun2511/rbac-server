@@ -5,15 +5,15 @@ export async function getTicketComments(ticketId: string) {
     `
     SELECT
       c.id,
-      c."createdAt",
+      c.created_at,
       c.comment,
       u.name AS "userName",
       u.role AS "userRole",
       'COMMENT' AS type,
       '{}'::jsonb AS metadata
     FROM ticket_comments c
-    JOIN users u ON u.id = c."userId"
-    WHERE c."ticketId" = $1
+    JOIN users u ON u.id = c.user_id
+    WHERE c.ticket_id = $1
     `,
     [ticketId]
   );
@@ -26,11 +26,12 @@ export async function getTicketActivity(ticketId: string) {
     `
     SELECT
       a.id,
-      a."createdAt",
+      a.created_at,
       a.type,
       a.metadata,
       u.name AS "userName",
       u.role AS "userRole",
+      'ACTIVITY' AS kind,
       CASE WHEN r.id IS NOT NULL THEN json_build_object(
         'id', r.id,
         'name', r.name,
@@ -38,9 +39,9 @@ export async function getTicketActivity(ticketId: string) {
         'role', r.role
       ) ELSE NULL END AS resolver
     FROM ticket_activity a
-    JOIN users u ON u.id = a."performedBy"
-    LEFT JOIN users r ON r.id::text = a.metadata->>'resolverId'
-    WHERE a."ticketId" = $1
+    JOIN users u ON u.id = a.performed_by
+    LEFT JOIN users r ON r.id::text = a.metadata->>'resolverId' -- Keep JSON key as is for now unless we migrate data
+    WHERE a.ticket_id = $1
     `,
     [ticketId]
   );

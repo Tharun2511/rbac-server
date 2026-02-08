@@ -3,16 +3,16 @@ import { db } from '../../config/db';
 export const createTicket = async (data: {
     title: string;
     description: string;
-    createdBy: string;
+    created_by: string;
     priority?: string;
 }) => {
     const result = await db.query(
         `
-        INSERT INTO tickets (title, description, "createdBy", status, priority, type)
+        INSERT INTO tickets (title, description, created_by, status, priority, type)
         VALUES ($1, $2, $3, 'OPEN', $4, 'TICKET')
         RETURNING *
         `,
-        [data.title, data.description, data.createdBy, data.priority || 'LOW'],
+        [data.title, data.description, data.created_by, data.priority || 'LOW'],
     );
 
     return result.rows[0];
@@ -22,8 +22,8 @@ export const assignTicket = async (ticketId: string, resolverId: string) => {
     const result = await db.query(
         `
         UPDATE tickets
-        SET "resolverId" = $1,
-        "updatedAt" = NOW(),
+        SET resolver_id = $1,
+        updated_at = NOW(),
         status = 'ASSIGNED'
         WHERE id = $2
         RETURNING *;
@@ -40,7 +40,7 @@ export const changeTicketStatus = async (ticketId: string, ticketStatus: string)
         `
         UPDATE tickets
         SET status = $1,
-        "updatedAt" = NOW()
+        updated_at = NOW()
         WHERE id = $2
         RETURNING *
         `,
@@ -55,7 +55,7 @@ export const updateTicketPriority = async (ticketId: string, priority: string) =
         `
         UPDATE tickets
         SET priority = $1,
-        "updatedAt" = NOW()
+        updated_at = NOW()
         WHERE id = $2
         RETURNING *
         `,
@@ -70,7 +70,7 @@ export const updateTicketType = async (ticketId: string, type: string) => {
         `
         UPDATE tickets
         SET type = $1,
-        "updatedAt" = NOW()
+        updated_at = NOW()
         WHERE id = $2
         RETURNING *
         `,
@@ -85,8 +85,8 @@ export const findTicketsAssignedToUser = async (userId: string) => {
         `
         SELECT * 
         FROM tickets
-        WHERE resolverId = $1
-        ORDER BY "createdAt" DESC
+        WHERE resolver_id = $1
+        ORDER BY created_at DESC
         `,
         [userId],
     );
@@ -120,14 +120,14 @@ export const findTicketById = async (ticketId: string) => {
 
          -- Join resolver
     LEFT JOIN users r
-        ON t."resolverId" = r.id
+        ON t.resolver_id = r.id
 
     -- Join creator
     JOIN users u
-        ON t."createdBy" = u.id
+        ON t.created_by = u.id
 
         WHERE t.id = $1
-        ORDER BY t."createdAt" DESC
+        ORDER BY t.created_at DESC
         `,
         [ticketId],
     );
@@ -161,13 +161,13 @@ export const findAllTickets = async () => {
 
          -- Join resolver
     LEFT JOIN users r
-        ON t."resolverId" = r.id
+        ON t.resolver_id = r.id
 
     -- Join creator
     JOIN users u
-        ON t."createdBy" = u.id
+        ON t.created_by = u.id
 
-    ORDER BY t."createdAt" DESC
+    ORDER BY t.created_at DESC
        `,
     );
 
@@ -200,15 +200,15 @@ export const getMyTickets = async (userId: string) => {
 
     -- Join resolver
     LEFT JOIN users r
-        ON t."resolverId" = r.id
+        ON t.resolver_id = r.id
 
     -- Join creator
     JOIN users u
-        ON t."createdBy" = u.id
+        ON t.created_by = u.id
 
-    WHERE t."createdBy" = $1
+    WHERE t.created_by = $1
 
-    ORDER BY t."createdAt" DESC
+    ORDER BY t.created_at DESC
     `,
         [userId],
     );
@@ -224,7 +224,7 @@ export const getHistoryTickets = async (userId: string) => {
 
           -- Resolver Details
           json_build_object(
-            id', r.id,
+            'id', r.id,
             'name', r.name,
             'email', r.email,
             'role', r.role
@@ -239,18 +239,19 @@ export const getHistoryTickets = async (userId: string) => {
           ) as createdUser
 
           -- Join resolver
-          LEFT JOIN on users r
-            ON t."resolverId" = r.id
+          FROM tickets t
+          LEFT JOIN users r
+            ON t.resolver_id = r.id
 
           -- Join CreatedUser
-          JOIN on users u
-            on t."createdBy" = u.id
+          JOIN users u
+            on t.created_by = u.id
 
-          WHERE t."createdBy" = $1
+          WHERE t.created_by = $1
 
-          AND t.status IN ("CLOSED", "VERIFIED", "RESOLVED")
+          AND t.status IN ('CLOSED', 'VERIFIED', 'RESOLVED')
 
-          ORDER BY t."createdAt" DESC
+          ORDER BY t.created_at DESC
         `,
         [userId],
     );
@@ -278,10 +279,10 @@ export const getAssignedTickets = async (resolverId: string) => {
       ) AS "createdUser"
        
     FROM tickets t
-    JOIN users r ON t."resolverId" = r.id
-    JOIN users u ON t."createdBy" = u.id
-    WHERE t."resolverId" = $1
-    ORDER BY t."createdAt" DESC
+    JOIN users r ON t.resolver_id = r.id
+    JOIN users u ON t.created_by = u.id
+    WHERE t.resolver_id = $1
+    ORDER BY t.created_at DESC
     `,
         [resolverId],
     );

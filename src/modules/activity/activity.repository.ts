@@ -3,7 +3,7 @@ import { db } from "../../config/db";
 export async function logActivity(ticketId: string, userId: string, type: string, metadata?: any) {
   const result = await db.query(
     `
-    INSERT INTO ticket_activity ("ticketId", "performedBy", type, metadata)
+    INSERT INTO ticket_activity (ticket_id, performed_by, type, metadata)
     VALUES ($1, $2, $3, $4)
     RETURNING *
     `,
@@ -20,9 +20,9 @@ export async function getActivity(ticketId: string) {
       u.name AS "userName",
       u.role AS "userRole"
     FROM ticket_activity a
-    JOIN users u ON u.id = a."performedBy"
-    WHERE a."ticketId" = $1
-    ORDER BY a."createdAt" ASC
+    JOIN users u ON u.id = a.performed_by
+    WHERE a.ticket_id = $1
+    ORDER BY a.created_at ASC
     `,
     [ticketId]
   );

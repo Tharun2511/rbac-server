@@ -25,10 +25,10 @@ CREATE TABLE tickets (
     status ticket_status_enum DEFAULT 'OPEN',
     priority ticket_priority_enum DEFAULT 'LOW',
     type ticket_type_enum DEFAULT 'TICKET',
-    "createdBy" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    "resolverId" UUID REFERENCES users(id) ON DELETE SET NULL,
-    "createdAt" TIMESTAMPTZ DEFAULT NOW(),
-    "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+    "created_by" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    "resolver_id" UUID REFERENCES users(id) ON DELETE SET NULL,
+    "created_at" TIMESTAMPTZ DEFAULT NOW(),
+    "updated_at" TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Ticket Comments Table

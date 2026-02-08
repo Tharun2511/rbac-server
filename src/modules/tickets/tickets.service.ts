@@ -7,7 +7,7 @@ export const createTicket = async (userId: string, data: { title: string; descri
     const ticket = await ticketRepo.createTicket({
         title: data.title,
         description: data.description,
-        createdBy: userId,
+        created_by: userId,
         priority: data.priority
     });
     if (ticket) {
@@ -54,7 +54,7 @@ export const resolveTicket = async (ticketId: string, resolverId: string) => {
 
     if (!ticketDetails || ticketDetails.length === 0) throw new Error('Ticket not found');
 
-    if (ticketDetails.resolverId !== resolverId) throw new Error('Not assigned to this resolver');
+    if (ticketDetails.resolver_id !== resolverId) throw new Error('Not assigned to this resolver');
 
     if (ticketDetails.status !== 'ASSIGNED') throw new Error('Ticket is not assigned yet');
 
@@ -72,7 +72,7 @@ export const verifyResolveStatus = async (ticketId: string, verifierId: string) 
 
     if (!ticketDetails || ticketDetails.length === 0) throw new Error('Ticket not found');
 
-    if (ticketDetails.createdBy !== verifierId)
+    if (ticketDetails.created_by !== verifierId)
         throw new Error('Ticket is not created by this user');
 
     if (ticketDetails.status !== 'RESOLVED') throw new Error('Ticket is not resolved yet');

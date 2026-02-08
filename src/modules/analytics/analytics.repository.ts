@@ -6,7 +6,7 @@ export const getTicketStatusStats = async (userId: string) => {
         `
         SELECT status, COUNT(*)::int as count
         FROM tickets
-        WHERE "createdBy" = $1
+        WHERE created_by = $1
         GROUP BY status
         `,
         [userId]
@@ -17,9 +17,9 @@ export const getTicketStatusStats = async (userId: string) => {
 export const getTicketCreationStats = async (userId: string) => {
     const result = await db.query(
         `
-        SELECT ("createdAt" AT TIME ZONE 'Asia/Kolkata')::date as day, COUNT(*)::int as count
+        SELECT (created_at AT TIME ZONE 'Asia/Kolkata')::date as day, COUNT(*)::int as count
         FROM tickets
-        WHERE "createdBy" = $1
+        WHERE created_by = $1
         GROUP BY 1
         ORDER BY 1 ASC
         `,
@@ -31,9 +31,9 @@ export const getTicketCreationStats = async (userId: string) => {
 export const getRawAverageResolutionTime = async (userId: string) => {
     const result = await db.query(
         `
-        SELECT AVG(EXTRACT(EPOCH FROM ("updatedAt" - "createdAt"))) as avg_seconds
+        SELECT AVG(EXTRACT(EPOCH FROM (updated_at - created_at))) as avg_seconds
         FROM tickets
-        WHERE "createdBy" = $1 AND status = 'CLOSED'
+        WHERE created_by = $1 AND status = 'CLOSED'
         `,
         [userId]
     );
@@ -62,7 +62,7 @@ export const getTicketsPerResolver = async () => {
             u.name AS "resolverName", 
             COUNT(t.*)::int AS "ticketCount"
         FROM users u
-        LEFT JOIN tickets t ON t."resolverId" = u.id
+        LEFT JOIN tickets t ON t.resolver_id = u.id
         WHERE u.role = 'RESOLVER'
         GROUP BY u.id
     `);
@@ -71,7 +71,7 @@ export const getTicketsPerResolver = async () => {
 
 export const getDailyTicketTrend = async () => {
     const result = await db.query(`
-        SELECT ("createdAt" AT TIME ZONE 'Asia/Kolkata')::date AS day, COUNT(*)::int as count
+        SELECT (created_at AT TIME ZONE 'Asia/Kolkata')::date AS day, COUNT(*)::int as count
         FROM tickets
         GROUP BY day
         ORDER BY day
@@ -84,9 +84,9 @@ export const getResolverPerformance = async () => {
         SELECT 
             u.id AS "resolverId",
             u.name AS "resolverName",
-            AVG(EXTRACT(EPOCH FROM (t."updatedAt" - t."createdAt")) / 86400) AS "avgResolutionDays"
+            AVG(EXTRACT(EPOCH FROM (t.updated_at - t.created_at)) / 86400) AS "avgResolutionDays"
         FROM users u
-        LEFT JOIN tickets t ON t."resolverId" = u.id AND t.status='CLOSED'
+        LEFT JOIN tickets t ON t.resolver_id = u.id AND t.status='CLOSED'
         WHERE u.role='RESOLVER'
         GROUP BY u.id
     `);
@@ -97,8 +97,8 @@ export const getTicketAgingBuckets = async () => {
     const result = await db.query(`
         SELECT
             CASE
-                WHEN AGE(NOW(), "createdAt") <= INTERVAL '2 days' THEN '0–2 days'
-                WHEN AGE(NOW(), "createdAt") <= INTERVAL '7 days' THEN '3–7 days'
+                WHEN AGE(NOW(), created_at) <= INTERVAL '2 days' THEN '0–2 days'
+                WHEN AGE(NOW(), created_at) <= INTERVAL '7 days' THEN '3–7 days'
                 ELSE '7+ days'
             END AS range,
             COUNT(*)::int as count
@@ -122,8 +122,8 @@ export const getUsersByRole = async () => {
 export const getActiveUserStats = async () => {
     const result = await db.query(`
         SELECT 
-            COUNT(*) FILTER (WHERE "isActive" = true)::int as active,
-            COUNT(*) FILTER (WHERE "isActive" = false)::int as inactive
+            COUNT(*) FILTER (WHERE is_active = true)::int as active,
+            COUNT(*) FILTER (WHERE is_active = false)::int as inactive
         FROM users
     `);
     return result.rows[0];
@@ -131,7 +131,7 @@ export const getActiveUserStats = async () => {
 
 export const getSignupTrend = async () => {
     const result = await db.query(`
-        SELECT ("createdAt" AT TIME ZONE 'Asia/Kolkata')::date as day, COUNT(*)::int as count
+        SELECT (created_at AT TIME ZONE 'Asia/Kolkata')::date as day, COUNT(*)::int as count
         FROM users
         GROUP BY 1
         ORDER BY 1 ASC
@@ -150,8 +150,8 @@ export const getTicketSummary = async () => {
 export const getSystemActivityHeatmap = async () => {
     const result = await db.query(`
         SELECT
-            TRIM(TO_CHAR("createdAt" AT TIME ZONE 'Asia/Kolkata', 'Day')) as day,
-            EXTRACT(HOUR FROM "createdAt" AT TIME ZONE 'Asia/Kolkata')::int as hour,
+            TRIM(TO_CHAR(created_at AT TIME ZONE 'Asia/Kolkata', 'Day')) as day,
+            EXTRACT(HOUR FROM created_at AT TIME ZONE 'Asia/Kolkata')::int as hour,
             COUNT(*)::int as count
         FROM ticket_activity
         GROUP BY 1, 2
@@ -166,9 +166,9 @@ export const getResolverWorkload = async (resolverId: string) => {
         SELECT
             COUNT(*) FILTER (WHERE status = 'ASSIGNED')::int as assigned,
             0 as "inProgress", -- Placeholder as IN_PROGRESS status doesn't strictly exist
-            COUNT(*) FILTER (WHERE status = 'RESOLVED' AND ("updatedAt" AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date)::int as "resolvedToday"
+            COUNT(*) FILTER (WHERE status = 'RESOLVED' AND (updated_at AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date)::int as "resolvedToday"
         FROM tickets
-        WHERE "resolverId" = $1::uuid
+        WHERE resolver_id = $1::uuid
     `, [resolverId]);
     return result.rows[0];
 };
@@ -176,10 +176,10 @@ export const getResolverWorkload = async (resolverId: string) => {
 export const getResolverResolutionTrend = async (resolverId: string) => {
     const result = await db.query(`
         SELECT 
-            ("createdAt" AT TIME ZONE 'Asia/Kolkata')::date as day, 
+            (created_at AT TIME ZONE 'Asia/Kolkata')::date as day, 
             COUNT(*)::int as resolved
         FROM ticket_activity
-        WHERE type = 'TICKET_RESOLVED' AND "performedBy" = $1::uuid
+        WHERE type = 'TICKET_RESOLVED' AND performed_by = $1::uuid
         GROUP BY 1
         ORDER BY 1 ASC
     `, [resolverId]);
@@ -191,7 +191,7 @@ export const getResolverInflowOutflow = async (resolverId: string) => {
     const result = await db.query(`
         WITH inflow AS (
             SELECT 
-                ("createdAt" AT TIME ZONE 'Asia/Kolkata')::date as day, 
+                (created_at AT TIME ZONE 'Asia/Kolkata')::date as day, 
                 COUNT(*)::int as count
             FROM ticket_activity
             WHERE type = 'TICKET_ASSIGNED' AND metadata->>'resolverId' = $1::text
@@ -199,10 +199,10 @@ export const getResolverInflowOutflow = async (resolverId: string) => {
         ),
         outflow AS (
             SELECT 
-                ("createdAt" AT TIME ZONE 'Asia/Kolkata')::date as day, 
+                (created_at AT TIME ZONE 'Asia/Kolkata')::date as day, 
                 COUNT(*)::int as count
             FROM ticket_activity
-            WHERE type = 'TICKET_RESOLVED' AND "performedBy" = $1::uuid
+            WHERE type = 'TICKET_RESOLVED' AND performed_by = $1::uuid
             GROUP BY 1
         )
         SELECT 
@@ -219,9 +219,9 @@ export const getResolverInflowOutflow = async (resolverId: string) => {
 export const getResolverAvgResolutionTime = async (resolverId: string) => {
     // Calculated from tickets table for closed tickets
     const result = await db.query(`
-        SELECT AVG(EXTRACT(EPOCH FROM ("updatedAt" - "createdAt")) / 86400) as "avgDays"
+        SELECT AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 86400) as "avgDays"
         FROM tickets
-        WHERE "resolverId" = $1::uuid AND status IN ('RESOLVED', 'CLOSED', 'VERIFIED')
+        WHERE resolver_id = $1::uuid AND status IN ('RESOLVED', 'CLOSED', 'VERIFIED')
     `, [resolverId]);
     return result.rows[0];
 };
