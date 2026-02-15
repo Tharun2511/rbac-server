@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as authService from './auth.service';
-import { updateRefreshToken } from './auth.repository';
-import { generateRefreshToken, hashRefreshToken } from './auth.service';
+import { deleteUserRefreshTokens, storeRefreshToken } from './auth.repository';
+import { generateRefreshToken, hashRefreshToken, getMyContexts, getMyPermissions } from './auth.service';
 import { signToken } from '../../utils/jwt';
 
 export const login = async (req: Request, res: Response) => {
@@ -13,10 +13,8 @@ export const login = async (req: Request, res: Response) => {
     try {
         const result = await authService.login(email, password);
         
-        // Remove refreshToken from response body but keep it for cookie
-        const { refreshToken, ...responseBody } = result;
-        
-        res.cookie("refreshToken", refreshToken, {
+        // Also set as httpOnly cookie for refresh endpoint
+        res.cookie("refreshToken", result.refreshToken, {
             httpOnly: true,
             secure: true,
             sameSite: "strict",
@@ -24,7 +22,8 @@ export const login = async (req: Request, res: Response) => {
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days    
         });
 
-        return res.status(200).json(responseBody);
+        // Return full response including refreshToken for frontend storage
+        return res.status(200).json(result);
 
 
     } catch(err) {
@@ -35,7 +34,7 @@ export const login = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-    await updateRefreshToken(userId, null);
+    await deleteUserRefreshTokens(userId);
     res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: true,
@@ -52,10 +51,14 @@ export const refreshToken = async(req:Request, res: Response) => {
     try {
         const user = await authService.getUserByRefreshToken(refreshToken);
         if(!user) return res.status(401).json({ message: 'Unauthorized' });
-        const newAccessToken = signToken({ userId: user.id, role: user.role, name: user.name });
+        const newAccessToken = signToken({ userId: user.id });
 
         const newRefreshToken = generateRefreshToken();
-        await updateRefreshToken(user.id, hashRefreshToken(newRefreshToken));
+        // Rotate: delete old tokens, store new one
+        await deleteUserRefreshTokens(user.id);
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        await storeRefreshToken(user.id, newRefreshToken, expiresAt);
 
         // Rotate the refresh token
         res.cookie("refreshToken", newRefreshToken, {
@@ -65,14 +68,46 @@ export const refreshToken = async(req:Request, res: Response) => {
             path: "/auth/refresh", 
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days    
         });
-        return res.status(200).json({ accessToken: newAccessToken, user: {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            name: user.name,
-        } });
+        return res.status(200).json({ 
+            token: newAccessToken, 
+            refreshToken: newRefreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+            }
+        });
     } catch {
         return res.status(401).json({ message: 'Unauthorized' });
     }
     
 }
+
+export const getContexts = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    try {
+        const contexts = await getMyContexts(userId);
+        return res.json(contexts);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to fetch contexts' });
+    }
+};
+
+export const getPermissions = async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const orgId = req.headers['x-org-id'] as string;
+    const projectId = req.headers['x-project-id'] as string;
+
+    try {
+        const permissions = await getMyPermissions(userId, orgId, projectId);
+        return res.json({ permissions });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to fetch permissions' });
+    }
+};

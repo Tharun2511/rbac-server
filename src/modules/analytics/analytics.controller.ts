@@ -1,57 +1,35 @@
 import { Request, Response } from 'express';
 import * as analyticsService from './analytics.service';
 
-export const getUserAnalytics = async (req: Request, res: Response) => {
+export const getOrgAnalytics = async (req: Request, res: Response) => {
+    const orgId = req.headers['x-org-id'] as string;
+    const projectId = req.headers['x-project-id'] as string;
+    const isSystemAdmin = (req as any).isSystemAdmin;
+
+    if (!orgId && !isSystemAdmin) {
+        return res.status(400).json({ message: 'Organization context required' });
+    }
+
     try {
-        // req.user is populated by authenticate middleware
-        // @ts-ignore - assuming req.user exists from middleware
-        const userId = req.user?.userId;
-
-        if (!userId) {
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
-
-        const data = await analyticsService.getUserAnalytics(userId);
-        return res.status(200).json(data);
+        const data = await analyticsService.getOrgAnalytics(orgId || undefined, projectId || undefined);
+        res.json(data);
     } catch (error) {
-        console.error('Error fetching user analytics:', error);
-        return res.status(500).json({ message: 'Internal server error' });
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch analytics' });
     }
 };
 
-export const getManagerAnalytics = async (req: Request, res: Response) => {
+export const getMyAnalytics = async (req: Request, res: Response) => {
+    const orgId = req.headers['x-org-id'] as string;
+    const userId = req.user?.userId;
+    
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
     try {
-        const data = await analyticsService.getManagerAnalytics();
-        return res.status(200).json(data);
+        const data = await analyticsService.getMyAnalytics(orgId || undefined, userId);
+        res.json(data);
     } catch (error) {
-        console.error('Error fetching manager analytics:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-    }
-};
-
-export const getAdminAnalytics = async (req: Request, res: Response) => {
-    try {
-        const data = await analyticsService.getAdminAnalytics();
-        return res.status(200).json(data);
-    } catch (error) {
-        console.error('Error fetching admin analytics:', error);
-        return res.status(500).json({ message: 'Error fetching admin analytics', error });
-    }
-};
-
-export const getResolverAnalytics = async (req: Request, res: Response) => {
-    try {
-        // @ts-ignore
-        const userId = req.user?.userId;
-
-        if (!userId) {
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
-
-        const data = await analyticsService.getResolverAnalytics(userId);
-        return res.status(200).json(data);
-    } catch (error) {
-        console.error('Error fetching resolver analytics:', error);
-        return res.status(500).json({ message: 'Error fetching resolver analytics', error });
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch user analytics' });
     }
 };

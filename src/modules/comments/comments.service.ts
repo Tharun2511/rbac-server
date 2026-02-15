@@ -1,12 +1,9 @@
 import * as commentRepo from './comments.repository';
 import * as ticketService from '../tickets/tickets.service';
 
-export const createComment = async (ticketId: string, userId: string, comment: string) => {
-    const ticket = await ticketService.findTicketById(ticketId);
-
-    if (!ticket) {
-        throw new Error('Ticket not found');
-    }
+export const createComment = async (ticketId: string, userId: string, comment: string, orgId: string) => {
+    // Verify ticket existence and access (scoped to org)
+    await ticketService.getTicketById(ticketId, orgId);
 
     return await commentRepo.createComment({
         ticketId,
@@ -15,13 +12,9 @@ export const createComment = async (ticketId: string, userId: string, comment: s
     });
 };
 
-export const getCommentsByTicketId = async (ticketId: string) => {
-    // We might want to check if ticket exists here too
-    const ticket = await ticketService.findTicketById(ticketId);
-
-    if (!ticket) {
-        throw new Error('Ticket not found');
-    }
+export const getCommentsByTicketId = async (ticketId: string, orgId: string) => {
+    // Verify ticket existence and access
+    await ticketService.getTicketById(ticketId, orgId);
 
     return await commentRepo.getCommentsByTicketId(ticketId);
 };

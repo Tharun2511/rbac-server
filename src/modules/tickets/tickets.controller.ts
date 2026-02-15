@@ -2,152 +2,82 @@ import { Request, Response } from 'express';
 import * as ticketService from './tickets.service';
 
 export const createTicket = async (req: Request, res: Response) => {
-    const { title, description } = req.body;
-
-    if (!title || !description) return res.status(400).json({ message: 'Missing Required Fields' });
-
     try {
-        const createdTicket = await ticketService.createTicket(req.user?.userId!, {
-            title,
-            description,
-            priority: req.body.priority 
+        const { title, description, priority, type } = req.body;
+        const orgId = req.headers['x-org-id'] as string;
+        const projectId = req.headers['x-project-id'] as string;
+        const userId = req.user?.userId;
+
+        if (!orgId) return res.status(400).json({ message: 'Organization context required' });
+        if (!projectId) return res.status(400).json({ message: 'Please select a project before creating a ticket' });
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        const ticket = await ticketService.createTicket({
+            title, description, priority: priority || 'LOW', type: type || 'TICKET',
+            orgId, projectId, createdBy: userId
         });
-        return res.status(201).json(createdTicket);
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
+        res.status(201).json(ticket);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to create ticket' });
     }
-};
-
-export const assignTicket = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-    const { resolverId } = req.body;
-
-    if (!ticketId || !resolverId)
-        return res.status(400).json({ message: 'Missing Required fields' });
-
-    try {
-        await ticketService.assignTicket(ticketId, resolverId, req.user?.userId!);
-        return res.status(200).json({ message: 'Assigned ticket successfully' });
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-export const resolveTicket = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-    const resolverId = req.user?.userId;
-
-    if (!ticketId || !resolverId)
-        return res.status(400).json({ message: 'Missing Required fields' });
-
-    try {
-        await ticketService.resolveTicket(ticketId, resolverId);
-        return res.status(200).json({ message: 'Assigned ticket successfully' });
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-export const verifyTicketResolved = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-    const verifierId = req.user?.userId;
-
-    if (!ticketId) return res.status(400).json({ message: 'Missing Required fields' });
-
-    try {
-        await ticketService.verifyResolveStatus(ticketId, verifierId!);
-        return res.status(200).json({ message: 'Ticket verified successfully' });
-    } catch (error: any) {
-        return res.status(500).json({ Message: error.message });
-    }
-};
-
-export const closeTicket = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-    const managerId = req.user?.userId;
-
-    if (!ticketId) return res.status(400).json({ message: 'Missing Required fields' });
-
-    try {
-        await ticketService.closeTicket(ticketId, managerId!);
-        return res.status(200).json({ message: 'Ticket verified successfully' });
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-export const listAllTickets = async (_req: Request, res: Response) => {
-    try {
-        const tickets = await ticketService.findAllTickets();
-        return res.status(200).json(tickets);
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-export const findTicketById = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-
-    if (!ticketId) return res.status(400).json({ message: 'TicketId is not valid' });
-
-    const tickets = await ticketService.findTicketById(ticketId);
-
-    return res.status(200).json(tickets);
 };
 
 export const getMyTickets = async (req: Request, res: Response) => {
-    const myTickets = await ticketService.getMyTickets(req.user?.userId || '');
-    return res.status(200).json(myTickets);
-};
-
-export const getHistoryTickets = async (req: Request, res: Response) => {
-    const tickets = await ticketService.getHistoryTickets(req.user?.userId || '');
-    return res.status(200).json(tickets);
-};
-
-export const getAssignedTickets = async (req: Request, res: Response) => {
-    const tickets = await ticketService.getAssignedTickets(req.params.resolverId);
-    return res.status(200).json(tickets);
-};
-
-export const changeTicketStatus = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-    const { status } = req.body;
-
-    if (!ticketId || !status) return res.status(400).json({ message: 'Missing fields' });
-
     try {
-        const updated = await ticketService.changeStatus(ticketId, status, req.user?.userId!);
-        return res.status(200).json(updated);
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
+        const orgId = req.headers['x-org-id'] as string;
+        const projectId = req.headers['x-project-id'] as string;
+        const userId = req.user?.userId;
+
+        if (!orgId) return res.status(400).json({ message: 'Organization context required' });
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        // Use userId filter: returns tickets where user is creator OR resolver
+        const tickets = await ticketService.getTickets(orgId, projectId, undefined, undefined, userId);
+        res.json(tickets);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch tickets' });
     }
 };
 
-export const updateTicketClassification = async (req: Request, res: Response) => {
-    const { ticketId } = req.params;
-    const { priority, type } = req.body;
-
-    if (!ticketId) return res.status(400).json({ message: 'Missing fields' });
-
+export const getTickets = async (req: Request, res: Response) => {
     try {
-        let updatedTicket;
+        const orgId = req.headers['x-org-id'] as string;
+        const projectId = req.headers['x-project-id'] as string;
+        
+        if (!orgId) return res.status(400).json({ message: 'Organization context required' });
 
-        if (priority) {
-            updatedTicket = await ticketService.updatePriority(ticketId, priority, req.user?.userId!);
-        }
+        const tickets = await ticketService.getTickets(orgId, projectId);
+        res.json(tickets);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch tickets' });
+    }
+};
 
-        if (type) {
-            updatedTicket = await ticketService.updateType(ticketId, type, req.user?.userId!);
-        }
+export const getTicket = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const orgId = req.headers['x-org-id'] as string;
+        if (!orgId) return res.status(400).json({ message: 'Organization context required' });
 
-        if (!updatedTicket) {
-             // In case neither priority nor type was provided, just return the ticket
-             updatedTicket = await ticketService.findTicketById(ticketId);
-        }
+        const ticket = await ticketService.getTicketById(id, orgId);
+        res.json(ticket);
+    } catch (error) {
+        res.status(404).json({ message: 'Ticket not found' });
+    }
+};
 
-        return res.status(200).json(updatedTicket);
-    } catch (error: any) {
-        return res.status(500).json({ message: error.message });
+export const updateTicket = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        const userId = req.user?.userId;
+        const ticket = await ticketService.updateTicket(id, updates, userId);
+        res.json(ticket);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to update ticket' });
     }
 };

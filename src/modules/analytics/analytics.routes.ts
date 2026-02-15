@@ -1,17 +1,20 @@
 import { Router } from 'express';
-import { getManagerAnalytics, getUserAnalytics, getAdminAnalytics, getResolverAnalytics } from './analytics.controller';
 import authMiddleware from '../../middlewares/auth.middleware';
-import authorize from '../../middlewares/authorize.middleware';
+import { rbacMiddleware, requirePermission } from '../../middlewares/rbac.middleware';
+import * as analyticsController from './analytics.controller';
 
 const router = Router();
 
-router.get('/user', authMiddleware, authorize(['USER']), getUserAnalytics);
-router.get('/manager', authMiddleware, authorize(['MANAGER', 'ADMIN']), getManagerAnalytics);
+router.use(authMiddleware);
+router.use(rbacMiddleware);
 
-router.get('/admin', authMiddleware, authorize(['ADMIN']), getAdminAnalytics);
+// Org-wide analytics: Requires 'analytics.view.org'
+router.get('/org', requirePermission('analytics.view.org'), analyticsController.getOrgAnalytics);
 
-
-// For resolver specific analytics
-router.get('/resolver', authMiddleware, authorize(['RESOLVER']), getResolverAnalytics);
+// Personal analytics: Requires 'analytics.view.self' (essentially everyone)
+// Should we require 'analytics.view.self' or just allow authenticated?
+// Let's assume there is a permission for it, or we add it to default roles.
+// For now, let's use 'analytics.view.self'
+router.get('/me', requirePermission('analytics.view.self'), analyticsController.getMyAnalytics);
 
 export default router;

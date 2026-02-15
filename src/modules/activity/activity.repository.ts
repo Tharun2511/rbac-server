@@ -17,8 +17,7 @@ export async function getActivity(ticketId: string) {
     `
     SELECT 
       a.*, 
-      u.name AS "userName",
-      u.role AS "userRole"
+      u.name AS "userName"
     FROM ticket_activity a
     JOIN users u ON u.id = a."performedBy"
     WHERE a."ticketId" = $1

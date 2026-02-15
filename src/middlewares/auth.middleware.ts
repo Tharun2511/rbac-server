@@ -6,7 +6,7 @@ import { AuthUser } from '../types/auth';
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader && !authHeader?.startsWith('Beaer')) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -17,8 +17,6 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
     req.user = {
       userId: decoded.userId,
-      role: decoded.role,
-      name: decoded.name,
     };
 
     next();
