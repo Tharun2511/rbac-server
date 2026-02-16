@@ -5,6 +5,8 @@ import ticketRoutes from './modules/tickets/tickets.routes';
 import commentRoutes from './modules/comments/comments.routes';
 import timelineRoutes from "./modules/timeline/timeline.routes";
 import analyticsRoutes from './modules/analytics/analytics.routes';
+import organizationRoutes from './modules/organizations/organizations.routes';
+import projectRoutes from './modules/projects/projects.routes';
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use('/tickets', ticketRoutes);
 router.use('/comments', commentRoutes);
 router.use("/timeline", timelineRoutes);
 router.use('/analytics', analyticsRoutes);
+router.use('/organizations', organizationRoutes);
+router.use('/projects', projectRoutes);
 
 export default router;

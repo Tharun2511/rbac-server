@@ -25,11 +25,10 @@ export const getCommentsByTicketId = async (ticketId: string) => {
             json_build_object(
                 'id', u.id,
                 'name', u.name,
-                'email', u.email,
-                'role', u.role
+                'email', u.email
             ) AS user
         FROM ticket_comments c
-        JOIN users u ON c."userId" = u.id
+        LEFT JOIN users u ON c."userId" = u.id
         WHERE c."ticketId" = $1
         ORDER BY c."createdAt" ASC
         `,
