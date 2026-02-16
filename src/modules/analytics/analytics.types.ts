@@ -113,3 +113,166 @@ export interface ResolverAnalyticsResponse {
     inflowOutflow: InflowOutflow[];
     avgResolutionDays: number;
 }
+
+// System Admin Analytics
+
+export interface SystemOrgStats {
+    totalOrgs: number;
+    totalUsers: number;
+    totalProjects: number;
+    activeUsers: number;
+    inactiveUsers: number;
+}
+
+export interface OrgMemberDistribution {
+    id: string;
+    name: string;
+    slug: string;
+    memberCount: number;
+}
+
+export interface OrgTimelineData {
+    date: string;
+    count: number;
+}
+
+export interface RoleDistribution {
+    role: string;
+    count: number;
+}
+
+export interface SystemAdminAnalytics {
+    stats: SystemOrgStats;
+    memberDistribution: OrgMemberDistribution[];
+    orgTimeline: OrgTimelineData[];
+    roleDistribution: RoleDistribution[];
+}
+
+// PROJECT_MANAGER Analytics Types
+
+export interface TeamPerformanceMetric {
+    agentId: string;
+    agentName: string;
+    resolved: number;
+    inProgress: number;
+    assigned: number;
+    avgResolutionDays: number;
+}
+
+export interface WorkloadDistribution {
+    agentId: string;
+    agentName: string;
+    assigned: number;
+    inProgress: number;
+    total: number;
+}
+
+export interface TicketAgingBucket {
+    ageBucket: '0-2 days' | '3-7 days' | '7+ days';
+    count: number;
+}
+
+export interface InflowOutflowData {
+    date: string;
+    inflow: number;
+    outflow: number;
+}
+
+export interface ProjectManagerAnalytics {
+    teamPerformance: TeamPerformanceMetric[];
+    workloadDistribution: WorkloadDistribution[];
+    agingBuckets: TicketAgingBucket[];
+    inflowOutflow: InflowOutflowData[];
+}
+
+// AGENT Analytics Types
+
+export interface AgentProductivityStats {
+    resolvedToday: number;
+    resolvedThisWeek: number;
+    assigned: number;
+    inProgress: number;
+}
+
+export interface AgentVelocityTrend {
+    date: string;
+    resolved: number;
+}
+
+export interface AgentResolutionTime {
+    resolvedCount: number;
+    avgDays: number;
+}
+
+export interface AgentAnalytics {
+    productivity: AgentProductivityStats;
+    velocityTrend: AgentVelocityTrend[];
+    resolutionTime: AgentResolutionTime;
+    inflowOutflow: InflowOutflowData[];
+}
+
+// REQUESTER Analytics Types
+
+export interface RequesterTurnaroundTime {
+    completedTickets: number;
+    avgTurnaroundDays: number;
+}
+
+export interface RequesterActivity {
+    id: string;
+    type: string;
+    ticketId: string;
+    ticketTitle: string;
+    performedBy: string;
+    performedByName: string;
+    metadata: any;
+    createdAt: string;
+}
+
+export interface TicketStats {
+    openTickets: number;
+    inProgressTickets: number;
+    resolvedTickets: number;
+    closedTickets: number;
+    totalTickets: number;
+}
+
+export interface RequesterAnalytics {
+    stats: TicketStats;
+    turnaroundTime: RequesterTurnaroundTime;
+    recentActivity: RequesterActivity[];
+}
+
+// ORG_OWNER Analytics Types
+
+export interface CrossProjectPerformance {
+    projectId: string;
+    projectName: string;
+    totalTickets: number;
+    open: number;
+    resolved: number;
+    avgResolutionDays: number;
+    activeAgents: number;
+}
+
+export interface TopPerformer {
+    userId: string;
+    userName: string;
+    ticketsResolved: number;
+    avgResolutionDays: number;
+}
+
+export interface BottleneckAnalysis {
+    projectId: string;
+    projectName: string;
+    staleTickets: number;
+    unassignedTickets: number;
+    avgOpenAge: number;
+}
+
+export interface OrgOwnerAnalytics {
+    crossProjectPerformance: CrossProjectPerformance[];
+    topPerformers: TopPerformer[];
+    bottleneckAnalysis: BottleneckAnalysis[];
+    orgStats: TicketStats;
+}
