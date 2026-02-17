@@ -83,9 +83,19 @@ export const rbacMiddleware = async (req: Request, res: Response, next: NextFunc
 
 export const requirePermission = (permission: string) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.permissions || !req.permissions.has(permission)) {
+        if (!req.permissions) {
             return res.status(403).json({ message: `Forbidden: Missing permission ${permission}` });
         }
-        next();
+        // Direct match
+        if (req.permissions.has(permission)) return next();
+        // Wildcard match: "ticket.*" covers "ticket.assign"
+        const parts = permission.split('.');
+        for (let i = parts.length - 1; i > 0; i--) {
+            const wildcard = parts.slice(0, i).join('.') + '.*';
+            if (req.permissions.has(wildcard)) return next();
+        }
+        // Global wildcard
+        if (req.permissions.has('*')) return next();
+        return res.status(403).json({ message: `Forbidden: Missing permission ${permission}` });
     };
 };

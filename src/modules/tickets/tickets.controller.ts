@@ -81,3 +81,76 @@ export const updateTicket = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Failed to update ticket' });
     }
 };
+
+export const updateTicketClassification = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { type, priority } = req.body;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        const ticket = await ticketService.classifyTicket(id, userId, type, priority);
+        res.json(ticket);
+    } catch (error: any) {
+        console.error(error);
+        res.status(error.statusCode || 500).json({ message: error.message || 'Failed to classify ticket' });
+    }
+};
+
+export const assignTicket = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { resolverId } = req.body;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+        if (!resolverId) return res.status(400).json({ message: 'resolverId is required' });
+
+        const ticket = await ticketService.assignTicket(id, userId, resolverId);
+        res.json(ticket);
+    } catch (error: any) {
+        console.error(error);
+        res.status(error.statusCode || 500).json({ message: error.message || 'Failed to assign ticket' });
+    }
+};
+
+export const resolveTicket = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        const ticket = await ticketService.resolveTicket(id, userId);
+        res.json(ticket);
+    } catch (error: any) {
+        console.error(error);
+        res.status(error.statusCode || 500).json({ message: error.message || 'Failed to resolve ticket' });
+    }
+};
+
+export const verifyTicket = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        const ticket = await ticketService.verifyTicket(id, userId);
+        res.json(ticket);
+    } catch (error: any) {
+        console.error(error);
+        res.status(error.statusCode || 500).json({ message: error.message || 'Failed to verify ticket' });
+    }
+};
+
+export const closeTicket = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        const ticket = await ticketService.closeTicket(id, userId);
+        res.json(ticket);
+    } catch (error: any) {
+        console.error(error);
+        res.status(error.statusCode || 500).json({ message: error.message || 'Failed to close ticket' });
+    }
+};

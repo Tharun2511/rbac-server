@@ -21,21 +21,29 @@ export const createUser = async (data: {
 // ─── Find All Users (System-wide or Org-scoped) ────────────────
 export const findAllUsers = async (orgId?: string) => {
     if (orgId) {
-        // Return users who are members of this org
+        // Return users who are members of this org with their role
         const result = await db.query(`
-            SELECT DISTINCT u.id, u.name, u.email, u."isActive", u."isSystemAdmin", u."createdAt"
+            SELECT DISTINCT
+                u.id,
+                u.name,
+                u.email,
+                u."isActive",
+                u."isSystemAdmin",
+                u."createdAt",
+                r.name as role
             FROM users u
             JOIN members m ON m."userId" = u.id
-            WHERE m."orgId" = $1
+            LEFT JOIN roles r ON m."roleId" = r.id
+            WHERE m."orgId" = $1 AND m."projectId" IS NULL
             ORDER BY u.name
         `, [orgId]);
         return result.rows;
     }
-    // System-wide: return all users
+    // System-wide: return all users (no role for system-wide view)
     const result = await db.query(`
         SELECT id, name, email, "isActive", "isSystemAdmin", "createdAt"
         FROM users
-        ORDER BY name 
+        ORDER BY name
     `);
     return result.rows;
 };
