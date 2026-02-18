@@ -10,6 +10,7 @@ class PermissionCache {
      */
     async load() {
         console.log('🔄 Loading Permission Cache...');
+        const startTime = Date.now();
         try {
             const result = await db.query(`
                 SELECT 
@@ -18,6 +19,8 @@ class PermissionCache {
                 FROM role_permissions rp
                 JOIN permissions p ON rp."permissionId" = p.id
             `);
+
+            console.log(`📊 Fetched ${result.rows.length} permission entries from DB`);
 
             this.rolePermissions.clear();
 
@@ -32,11 +35,20 @@ class PermissionCache {
             }
 
             this.isLoaded = true;
-            console.log(`✅ Permission Cache Loaded. Roles cached: ${this.rolePermissions.size}`);
+            const duration = Date.now() - startTime;
+            console.log(`✅ Permission Cache Loaded in ${duration}ms. Roles cached: ${this.rolePermissions.size}`);
+             // Log a few examples if debug needed, but keep it clean for now
         } catch (error) {
             console.error('❌ Failed to load permission cache:', error);
+            if (error instanceof Error) {
+                console.error('Stack:', error.stack);
+            }
             throw error;
         }
+    }
+
+    async reload() {
+        return this.load();
     }
 
     /**
