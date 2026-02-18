@@ -150,7 +150,8 @@ export async function getMyPermissions(userId: string, orgId?: string, projectId
         const sysRoleRes = await db.query("SELECT id FROM roles WHERE scope = 'SYSTEM' LIMIT 1");
         const sysRoleId = sysRoleRes.rows[0]?.id;
         if (sysRoleId) {
-            return Array.from(permissionCache.getPermissions([sysRoleId]) as Set<string>);
+            const perms = await permissionCache.getPermissions([sysRoleId]);
+            return Array.from(perms as Set<string>);
         }
     }
 
@@ -174,5 +175,6 @@ export async function getMyPermissions(userId: string, orgId?: string, projectId
 
     if (roleIds.length === 0) return [];
 
-    return Array.from(permissionCache.getPermissions(roleIds) as Set<string>);
+    const perms = await permissionCache.getPermissions(roleIds);
+    return Array.from(perms as Set<string>);
 }

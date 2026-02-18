@@ -6,7 +6,7 @@ const PORT = env.PORT || 4000;
 
 (async () => {
     try {
-        await permissionCache.load();
+        await permissionCache.ensureLoaded();
         app.listen(Number(PORT), () => console.log(`🚀 Server running on port ${PORT}`));
     } catch (error) {
         console.error('❌ Failed to start server:', error);

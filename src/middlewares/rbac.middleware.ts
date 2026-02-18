@@ -29,7 +29,7 @@ export const rbacMiddleware = async (req: Request, res: Response, next: NextFunc
             const sysRoleId = sysRoleRes.rows[0]?.id;
             
             if (sysRoleId) {
-                req.permissions = permissionCache.getPermissions([sysRoleId]);
+                req.permissions = await permissionCache.getPermissions([sysRoleId]);
                 next();
                 return;
             }
@@ -68,7 +68,7 @@ export const rbacMiddleware = async (req: Request, res: Response, next: NextFunc
 
         // 4. Load Permissions (merge from all applicable roles)
         if (roleIds.length > 0) {
-            req.permissions = permissionCache.getPermissions(roleIds);
+            req.permissions = await permissionCache.getPermissions(roleIds);
             if (req.context) req.context.roleId = roleIds[0]; // Primary role
         } else {
             req.permissions = new Set();

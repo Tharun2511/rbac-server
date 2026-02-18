@@ -3,24 +3,33 @@ import { db } from '../config/db';
 class PermissionCache {
     private rolePermissions: Map<string, Set<string>> = new Map();
     private isLoaded = false;
+    private loadPromise: Promise<void> | null = null;
 
     /**
-     * Loads all role permissions from the database into memory.
-     * Should be called on server startup.
+     * Ensures the cache is loaded before any permission check.
+     * Safe to call concurrently — deduplicates parallel loads.
      */
-    async load() {
-        console.log('🔄 Loading Permission Cache...');
+    async ensureLoaded() {
+        if (this.isLoaded) return;
+        if (!this.loadPromise) {
+            this.loadPromise = this._doLoad();
+        }
+        await this.loadPromise;
+    }
+
+    private async _doLoad() {
+        console.log('Loading Permission Cache...');
         const startTime = Date.now();
         try {
             const result = await db.query(`
-                SELECT 
+                SELECT
                     rp."roleId",
                     p.slug
                 FROM role_permissions rp
                 JOIN permissions p ON rp."permissionId" = p.id
             `);
 
-            console.log(`📊 Fetched ${result.rows.length} permission entries from DB`);
+            console.log(`Fetched ${result.rows.length} permission entries from DB`);
 
             this.rolePermissions.clear();
 
@@ -36,29 +45,29 @@ class PermissionCache {
 
             this.isLoaded = true;
             const duration = Date.now() - startTime;
-            console.log(`✅ Permission Cache Loaded in ${duration}ms. Roles cached: ${this.rolePermissions.size}`);
-             // Log a few examples if debug needed, but keep it clean for now
+            console.log(`Permission Cache Loaded in ${duration}ms. Roles cached: ${this.rolePermissions.size}`);
         } catch (error) {
-            console.error('❌ Failed to load permission cache:', error);
-            if (error instanceof Error) {
-                console.error('Stack:', error.stack);
-            }
+            this.loadPromise = null; // Allow retry on failure
+            console.error('Failed to load permission cache:', error);
             throw error;
         }
     }
 
+    /**
+     * Force reload (e.g. after role/permission changes).
+     */
     async reload() {
-        return this.load();
+        this.isLoaded = false;
+        this.loadPromise = null;
+        return this.ensureLoaded();
     }
 
     /**
      * Returns a combined set of permissions for a list of role IDs.
+     * Lazy-loads the cache on first call.
      */
-    getPermissions(roleIds: string[]): Set<string> {
-        if (!this.isLoaded) {
-            console.warn('⚠️ PermissionCache not loaded yet! Returning empty set.');
-            return new Set();
-        }
+    async getPermissions(roleIds: string[]): Promise<Set<string>> {
+        await this.ensureLoaded();
 
         const permissions = new Set<string>();
         for (const roleId of roleIds) {
@@ -75,8 +84,8 @@ class PermissionCache {
     /**
      * Checks if a user (via their roles) has a specific permission.
      */
-    hasPermission(roleIds: string[], permissionSlug: string): boolean {
-        const perms = this.getPermissions(roleIds);
+    async hasPermission(roleIds: string[], permissionSlug: string): Promise<boolean> {
+        const perms = await this.getPermissions(roleIds);
         return perms.has(permissionSlug);
     }
 }
