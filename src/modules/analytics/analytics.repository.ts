@@ -142,6 +142,42 @@ export const getRoleDistribution = async () => {
     return result.rows;
 };
 
+// --- New Queries for Org-Specific System Admin/Org Owner Views ---
+
+export const getSLACompliance = async (orgId: string) => {
+    const query = `
+        SELECT
+            CASE
+                WHEN EXTRACT(DAY FROM (t."updatedAt" - t."createdAt")) <= 7 THEN 'Within SLA (<7 days)'
+                ELSE 'Breached SLA (7+ days)'
+            END as "slaStatus",
+            COUNT(*)::int as count
+        FROM tickets t
+        WHERE t."orgId" = $1
+        AND t.status IN ('RESOLVED', 'CLOSED')
+        GROUP BY "slaStatus"
+    `;
+
+    const result = await db.query(query, [orgId]);
+    return result.rows;
+};
+
+export const getResourceAllocation = async (orgId: string) => {
+    const query = `
+        SELECT
+            p.name as "projectName",
+            COUNT(DISTINCT m."userId")::int as "agentCount"
+        FROM projects p
+        LEFT JOIN members m ON m."projectId" = p.id
+        WHERE p."orgId" = $1
+        GROUP BY p.name
+        ORDER BY "agentCount" DESC
+    `;
+
+    const result = await db.query(query, [orgId]);
+    return result.rows;
+};
+
 // PROJECT_MANAGER Analytics Queries
 
 export const getTeamPerformanceMetrics = async (projectId: string, days: number = 30) => {
@@ -214,6 +250,20 @@ export const getTicketAgingBuckets = async (projectId: string) => {
             END
     `;
 
+    const result = await db.query(query, [projectId]);
+    return result.rows;
+};
+
+export const getTicketTypeDistribution = async (projectId: string) => {
+    const query = `
+        SELECT
+            type as label,
+            COUNT(*)::int as value
+        FROM tickets
+        WHERE "projectId" = $1
+        GROUP BY type
+        ORDER BY value DESC
+    `;
     const result = await db.query(query, [projectId]);
     return result.rows;
 };
@@ -377,6 +427,27 @@ export const getAgentInflowOutflow = async (userId: string, orgId: string, days:
         LEFT JOIN assigned_tickets at ON ds.date = at.date
         LEFT JOIN resolved_tickets rt ON ds.date = rt.date
         ORDER BY ds.date ASC
+    `;
+
+    const result = await db.query(query, [userId, orgId]);
+    return result.rows;
+};
+
+export const getMyTasksDue = async (userId: string, orgId: string) => {
+    const query = `
+        SELECT 
+            priority,
+            CASE
+                WHEN EXTRACT(DAY FROM (NOW() - "createdAt")) <= 2 THEN '0-2 days'
+                WHEN EXTRACT(DAY FROM (NOW() - "createdAt")) <= 7 THEN '3-7 days'
+                ELSE '7+ days'
+            END as "ageBucket",
+            COUNT(*)::int as count
+        FROM tickets
+        WHERE "resolverId" = $1 
+        AND "orgId" = $2
+        AND status IN ('OPEN', 'IN_PROGRESS', 'ASSIGNED')
+        GROUP BY priority, "ageBucket"
     `;
 
     const result = await db.query(query, [userId, orgId]);

@@ -36,12 +36,14 @@ export const getProjectManagerAnalytics = async (projectId: string) => {
     const workloadDistribution = await analyticsRepo.getTeamWorkloadDistribution(projectId);
     const agingBuckets = await analyticsRepo.getTicketAgingBuckets(projectId);
     const inflowOutflow = await analyticsRepo.getInflowOutflowTrend(projectId);
+    const typeDistribution = await analyticsRepo.getTicketTypeDistribution(projectId);
 
     return {
         teamPerformance,
         workloadDistribution,
         agingBuckets,
-        inflowOutflow
+        inflowOutflow,
+        typeDistribution
     };
 };
 
@@ -50,12 +52,14 @@ export const getAgentAnalytics = async (userId: string, orgId: string) => {
     const velocityTrend = await analyticsRepo.getAgentVelocityTrend(userId, orgId);
     const resolutionTime = await analyticsRepo.getAgentAvgResolutionTime(userId, orgId);
     const inflowOutflow = await analyticsRepo.getAgentInflowOutflow(userId, orgId);
+    const tasksDue = await analyticsRepo.getMyTasksDue(userId, orgId);
 
     return {
         productivity,
         velocityTrend,
         resolutionTime,
-        inflowOutflow
+        inflowOutflow,
+        tasksDue
     };
 };
 
@@ -76,11 +80,15 @@ export const getOrgOwnerAnalytics = async (orgId: string) => {
     const topPerformers = await analyticsRepo.getOrgTopPerformers(orgId);
     const bottleneckAnalysis = await analyticsRepo.getBottleneckAnalysis(orgId);
     const orgStats = await analyticsRepo.getTicketStats(orgId);
+    const slaCompliance = await analyticsRepo.getSLACompliance(orgId);
+    const resourceAllocation = await analyticsRepo.getResourceAllocation(orgId);
 
     return {
         crossProjectPerformance,
         topPerformers,
         bottleneckAnalysis,
-        orgStats
+        orgStats,
+        slaCompliance,
+        resourceAllocation
     };
 };

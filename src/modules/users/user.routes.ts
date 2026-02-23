@@ -26,6 +26,9 @@ router.post('/', requirePermission('system.manage_users'), userController.create
 // Toggle user active status
 router.patch('/status/:userId', requirePermission('system.manage_users'), userController.updateUserStatus);
 
+// Get all resolvers in an organization (or project)
+router.get('/resolvers', requirePermission('ticket.assign'), userController.getResolvers);
+
 // Get a user's memberships (orgs, projects, roles)
 router.get('/:userId/memberships', requirePermission('system.manage_users'), userController.getUserMemberships);
 

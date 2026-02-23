@@ -45,6 +45,20 @@ export const fetchMembersByRole = async (req: Request, res: Response) => {
     }
 };
 
+export const getResolvers = async (req: Request, res: Response) => {
+    try {
+        const orgId = req.headers['x-org-id'] as string;
+        const projectId = req.headers['x-project-id'] as string | undefined;
+
+        if (!orgId) return res.status(400).json({ error: 'x-org-id header is required' });
+
+        const members = await userService.listMembersByRole(orgId, 'Resolver', projectId);
+        return res.status(200).json(members);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const updateUserStatus = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { status } = req.body;
