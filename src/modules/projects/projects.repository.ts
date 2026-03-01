@@ -1,4 +1,5 @@
 import { db } from '../../config/db';
+import { publishInvalidation } from '../../rbac/cache-invalidation';
 
 export const createProject = async (name: string, slug: string, orgId: string) => {
     const result = await db.query(
@@ -21,6 +22,8 @@ export const addMemberToProject = async (userId: string, orgId: string, projectI
         `INSERT INTO members ("userId", "orgId", "projectId", "roleId") VALUES ($1, $2, $3, $4) RETURNING *`,
         [userId, orgId, projectId, roleId]
     );
+    // Invalidate user's cached context — they now have a new project role
+    await publishInvalidation({ type: 'user_context', userId });
     return result.rows[0];
 };
 
@@ -59,5 +62,7 @@ export const removeMemberFromProject = async (projectId: string, userId: string)
         `DELETE FROM members WHERE "projectId" = $1 AND "userId" = $2 RETURNING *`,
         [projectId, userId]
     );
+    // Invalidate user's cached context — their project role was removed
+    await publishInvalidation({ type: 'user_context', userId });
     return result.rows[0];
 };

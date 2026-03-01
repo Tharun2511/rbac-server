@@ -15,6 +15,7 @@ router.use('/health', (_req: Request, res: Response) => {
 });
 
 import { permissionCache } from './rbac/permission-cache';
+import { publishInvalidation } from './rbac/cache-invalidation';
 
 router.post('/system/reload-permissions', async (req: Request, res: Response) => {
     try {
@@ -26,6 +27,8 @@ router.post('/system/reload-permissions', async (req: Request, res: Response) =>
         // if (req.headers['x-admin-secret'] !== process.env.ADMIN_SECRET) return res.sendStatus(403);
         
         await permissionCache.reload();
+        // Broadcast to all other server instances so they reload too
+        await publishInvalidation({ type: 'all_permissions' });
         res.status(200).json({ message: 'Permissions reloaded successfully' });
     } catch (error) {
         console.error('Failed to reload permissions:', error);

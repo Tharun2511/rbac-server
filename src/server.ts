@@ -2,6 +2,7 @@ import app from './app';
 import { env } from './config/env';
 import { permissionCache } from './rbac/permission-cache';
 import { redis } from './config/redis';
+import { initCacheInvalidation } from './rbac/cache-invalidation';
 
 const PORT = env.PORT || 4000;
 
@@ -31,6 +32,20 @@ const PORT = env.PORT || 4000;
         }
 
         await permissionCache.ensureLoaded();
+
+        // ─── PUB/SUB SETUP (NON-BLOCKING) ────────────────────────────────
+        //
+        // Initialize cache invalidation Pub/Sub listener.
+        // Same pattern as the Redis ping check above — wrapped in its own
+        // try/catch so a Pub/Sub failure doesn't prevent server startup.
+        // If this fails, cache invalidation falls back to TTL expiry only.
+        //
+        try {
+            await initCacheInvalidation();
+        } catch (err) {
+            console.warn('Cache invalidation Pub/Sub unavailable. Relying on TTL expiry.');
+        }
+
         app.listen(Number(PORT), () => console.log(`🚀 Server running on port ${PORT}`));
     } catch (error) {
         console.error('❌ Failed to start server:', error);

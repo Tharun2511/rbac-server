@@ -1,4 +1,5 @@
 import { db } from '../../config/db';
+import { publishInvalidation } from '../../rbac/cache-invalidation';
 
 export const createOrganization = async (name: string, slug: string) => {
     const result = await db.query(
@@ -23,6 +24,8 @@ export const addMemberToOrganization = async (userId: string, orgId: string, rol
         `INSERT INTO members ("userId", "orgId", "roleId") VALUES ($1, $2, $3) RETURNING *`,
         [userId, orgId, roleId]
     );
+    // Invalidate user's cached context — they now have a new org role
+    await publishInvalidation({ type: 'user_context', userId });
     return result.rows[0];
 };
 
