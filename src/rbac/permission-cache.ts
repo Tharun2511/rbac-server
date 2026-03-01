@@ -1,93 +1,25 @@
-import { db } from '../config/db';
+// ═══════════════════════════════════════════════════════════════════════════════
+// src/rbac/permission-cache.ts — Re-export from Redis-backed implementation
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// BEFORE (Layer 0): This file contained the full PermissionCache class with
+//   an in-memory Map. Every consumer imported { permissionCache } from here.
+//
+// AFTER (Layer 2): The implementation moved to redis-permission-cache.ts.
+//   This file is now a "barrel export" — it re-exports the same name from
+//   the new location.
+//
+// WHY KEEP THIS FILE?
+//   Every consumer in the app imports from './permission-cache':
+//     - src/server.ts
+//     - src/middlewares/rbac.middleware.ts
+//     - src/routes.ts
+//     - src/modules/auth/auth.service.ts
+//
+//   By re-exporting, NONE of those files need to change their imports.
+//   This is the "facade pattern" — hide implementation changes behind
+//   a stable interface.
+//
+// ═══════════════════════════════════════════════════════════════════════════════
 
-class PermissionCache {
-    private rolePermissions: Map<string, Set<string>> = new Map();
-    private isLoaded = false;
-    private loadPromise: Promise<void> | null = null;
-
-    /**
-     * Ensures the cache is loaded before any permission check.
-     * Safe to call concurrently — deduplicates parallel loads.
-     */
-    async ensureLoaded() {
-        if (this.isLoaded) return;
-        if (!this.loadPromise) {
-            this.loadPromise = this._doLoad();
-        }
-        await this.loadPromise;
-    }
-
-    private async _doLoad() {
-        console.log('Loading Permission Cache...');
-        const startTime = Date.now();
-        try {
-            const result = await db.query(`
-                SELECT
-                    rp."roleId",
-                    p.slug
-                FROM role_permissions rp
-                JOIN permissions p ON rp."permissionId" = p.id
-            `);
-
-            console.log(`Fetched ${result.rows.length} permission entries from DB`);
-
-            this.rolePermissions.clear();
-
-            for (const row of result.rows) {
-                const roleId = row.roleId;
-                const permissionSlug = row.slug;
-
-                if (!this.rolePermissions.has(roleId)) {
-                    this.rolePermissions.set(roleId, new Set());
-                }
-                this.rolePermissions.get(roleId)?.add(permissionSlug);
-            }
-
-            this.isLoaded = true;
-            const duration = Date.now() - startTime;
-            console.log(`Permission Cache Loaded in ${duration}ms. Roles cached: ${this.rolePermissions.size}`);
-        } catch (error) {
-            this.loadPromise = null; // Allow retry on failure
-            console.error('Failed to load permission cache:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Force reload (e.g. after role/permission changes).
-     */
-    async reload() {
-        this.isLoaded = false;
-        this.loadPromise = null;
-        return this.ensureLoaded();
-    }
-
-    /**
-     * Returns a combined set of permissions for a list of role IDs.
-     * Lazy-loads the cache on first call.
-     */
-    async getPermissions(roleIds: string[]): Promise<Set<string>> {
-        await this.ensureLoaded();
-
-        const permissions = new Set<string>();
-        for (const roleId of roleIds) {
-            const rolePerms = this.rolePermissions.get(roleId);
-            if (rolePerms) {
-                for (const perm of rolePerms) {
-                    permissions.add(perm);
-                }
-            }
-        }
-        return permissions;
-    }
-
-    /**
-     * Checks if a user (via their roles) has a specific permission.
-     */
-    async hasPermission(roleIds: string[], permissionSlug: string): Promise<boolean> {
-        const perms = await this.getPermissions(roleIds);
-        return perms.has(permissionSlug);
-    }
-}
-
-export const permissionCache = new PermissionCache();
+export { permissionCache } from './redis-permission-cache';

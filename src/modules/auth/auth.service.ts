@@ -4,6 +4,7 @@ import { findUserByEmail, findUserById } from '../users/user.repository';
 import crypto from "crypto";
 import * as authRepository from './auth.repository';
 import { db } from '../../config/db';
+import { userContextCache } from '../../rbac/user-context-cache';
 
 export const login = async (email: string, password: string) => {
     const user = await findUserByEmail(email);
@@ -144,11 +145,10 @@ export async function getMyContexts(userId: string) {
 export async function getMyPermissions(userId: string, orgId?: string, projectId?: string): Promise<string[]> {
     const { permissionCache } = require('../../rbac/permission-cache');
 
-    // Check if system admin
-    const userRes = await db.query('SELECT "isSystemAdmin" FROM users WHERE id = $1', [userId]);
-    if (userRes.rows[0]?.isSystemAdmin) {
-        const sysRoleRes = await db.query("SELECT id FROM roles WHERE scope = 'SYSTEM' LIMIT 1");
-        const sysRoleId = sysRoleRes.rows[0]?.id;
+    // Check if system admin (cached in Redis)
+    const isSystemAdmin = await userContextCache.getIsSystemAdmin(userId);
+    if (isSystemAdmin) {
+        const sysRoleId = await userContextCache.getSystemRoleId();
         if (sysRoleId) {
             const perms = await permissionCache.getPermissions([sysRoleId]);
             return Array.from(perms as Set<string>);
@@ -158,19 +158,13 @@ export async function getMyPermissions(userId: string, orgId?: string, projectId
     const roleIds: string[] = [];
 
     if (projectId) {
-        const memberRes = await db.query(
-            `SELECT "roleId" FROM members WHERE "userId" = $1 AND "projectId" = $2`,
-            [userId, projectId]
-        );
-        if (memberRes.rows[0]?.roleId) roleIds.push(memberRes.rows[0].roleId);
+        const projectRoleId = await userContextCache.getProjectRoleId(userId, projectId);
+        if (projectRoleId) roleIds.push(projectRoleId);
     }
 
     if (orgId) {
-        const memberRes = await db.query(
-            `SELECT "roleId" FROM members WHERE "userId" = $1 AND "orgId" = $2 AND "projectId" IS NULL`,
-            [userId, orgId]
-        );
-        if (memberRes.rows[0]?.roleId) roleIds.push(memberRes.rows[0].roleId);
+        const orgRoleId = await userContextCache.getOrgRoleId(userId, orgId);
+        if (orgRoleId) roleIds.push(orgRoleId);
     }
 
     if (roleIds.length === 0) return [];

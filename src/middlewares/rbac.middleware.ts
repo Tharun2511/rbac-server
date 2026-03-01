@@ -1,6 +1,6 @@
 import { Response, NextFunction, Request } from 'express';
-import { db } from '../config/db';
 import { permissionCache } from '../rbac/permission-cache';
+import { userContextCache } from '../rbac/user-context-cache';
 
 export const rbacMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -18,15 +18,13 @@ export const rbacMiddleware = async (req: Request, res: Response, next: NextFunc
         // Actually, for performance, we might want to cache this or put isSystemAdmin in token?
         // Plan said: "Scope resolution happens via DB/Cache lookup on every request" -> Good.
 
-        const userRes = await db.query('SELECT "isSystemAdmin" FROM users WHERE id = $1', [userId]);
-        const isSystemAdmin = userRes.rows[0]?.isSystemAdmin;
+        const isSystemAdmin = await userContextCache.getIsSystemAdmin(userId);
 
         if (isSystemAdmin) {
             // Set flag for downstream controllers
             (req as any).isSystemAdmin = true;
 
-            const sysRoleRes = await db.query("SELECT id FROM roles WHERE scope = 'SYSTEM' LIMIT 1");
-            const sysRoleId = sysRoleRes.rows[0]?.id;
+            const sysRoleId = await userContextCache.getSystemRoleId();
             
             if (sysRoleId) {
                 req.permissions = await permissionCache.getPermissions([sysRoleId]);
@@ -43,25 +41,19 @@ export const rbacMiddleware = async (req: Request, res: Response, next: NextFunc
         const roleIds: string[] = [];
 
         if (projectId) {
-            // Check project-level membership
-            const memberRes = await db.query(
-                `SELECT "roleId" FROM members WHERE "userId" = $1 AND "projectId" = $2`,
-                [userId, projectId]
-            );
-            if (memberRes.rows[0]?.roleId) {
-                roleIds.push(memberRes.rows[0].roleId);
+            // Check project-level membership (cached in Redis)
+            const projectRoleId = await userContextCache.getProjectRoleId(userId, projectId);
+            if (projectRoleId) {
+                roleIds.push(projectRoleId);
             }
             req.context = { projectId, orgId };
         }
 
         if (orgId) {
-            // Also check org-level membership (grants org-scoped permissions)
-            const memberRes = await db.query(
-                `SELECT "roleId" FROM members WHERE "userId" = $1 AND "orgId" = $2 AND "projectId" IS NULL`,
-                [userId, orgId]
-            );
-            if (memberRes.rows[0]?.roleId) {
-                roleIds.push(memberRes.rows[0].roleId);
+            // Also check org-level membership (cached in Redis)
+            const orgRoleId = await userContextCache.getOrgRoleId(userId, orgId);
+            if (orgRoleId) {
+                roleIds.push(orgRoleId);
             }
             if (!req.context) req.context = { orgId };
         }
